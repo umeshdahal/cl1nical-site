@@ -1,0 +1,19 @@
+---
+import Layout from '../layouts/Layout.astro';
+import TerminalUI from '../components/Terminal';
+---
+
+<Layout title="The Lab | cl1nical">
+  <main class="min-h-screen flex flex-col items-center justify-center p-6 bg-[#030303]">
+    <div class="mb-8 text-center">
+      <h1 class="text-4xl font-black tracking-tighter text-white mb-2">NEURAL_INTERFACE</h1>
+      <p class="text-gray-500 font-mono text-xs">// REMOTE_ACCESS_GRANTED</p>
+    </div>
+
+    <TerminalUI client:load />
+
+    <a href="/" class="mt-12 text-gray-600 hover:text-white transition-colors font-mono text-sm underline underline-offset-8">
+      DISCONNECT_SESSION
+    </a>
+  </main>
+</Layout>
