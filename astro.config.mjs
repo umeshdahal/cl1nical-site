@@ -1,15 +1,11 @@
 import { defineConfig } from 'astro/config';
-
-import tailwindcss from '@tailwindcss/vite';
 import react from '@astrojs/react';
+import tailwindcss from '@tailwindcss/vite'; // Use the Vite plugin for v4
 
 export default defineConfig({
-  // Replace with your actual domain
-  site: 'https://cl1nical.dev/',
-
+  // site: 'https://cl1nical.dev',
+  integrations: [react()],
   vite: {
-    plugins: [tailwindcss()]
+    plugins: [tailwindcss()], // This is the v4 requirement
   },
-
-  integrations: [react()]
 });

@@ -1,30 +1,41 @@
 ---
+import '../styles/global.css';
+
+interface Props {
+	title: string;
+}
+
 const { title } = Astro.props;
 ---
-<!DOCTYPE html>
-<html lang="en">
+
+<!doctype html>
+<html lang="en" class="bg-[#030303]">
 	<head>
 		<meta charset="UTF-8" />
+		<meta name="description" content="cl1nical - Digital Portfolio" />
 		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
 	</head>
-	<body>
+	<body class="antialiased selection:bg-purple-500/30 selection:text-purple-200">
 		<slot />
 	</body>
 </html>
 
 <style is:global>
-	:root {
-		--bg-color: #0a0a0a;
-		--accent-color: #7000ff;
-		--text-color: #ffffff;
+	/* Custom scrollbar to keep the "cool" vibe */
+	::-webkit-scrollbar {
+		width: 8px;
 	}
-	body {
-		margin: 0;
-		padding: 0;
-		background-color: var(--bg-color);
-		color: var(--text-color);
-		font-family: sans-serif;
-		overflow-x: hidden;
+	::-webkit-scrollbar-track {
+		background: #030303;
+	}
+	::-webkit-scrollbar-thumb {
+		background: #1a1a1a;
+		border-radius: 10px;
+	}
+	::-webkit-scrollbar-thumb:hover {
+		background: #252525;
 	}
 </style>
