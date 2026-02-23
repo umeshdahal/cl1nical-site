@@ -1,4 +1,6 @@
 ---
+// 1. Import the new ClientRouter (Astro 5 way)
+import { ClientRouter } from 'astro:transitions';
 import '../styles/global.css';
 
 interface Props {
@@ -12,30 +14,18 @@ const { title } = Astro.props;
 <html lang="en" class="bg-[#030303]">
 	<head>
 		<meta charset="UTF-8" />
-		<meta name="description" content="cl1nical - Digital Portfolio" />
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
+		
+		<ClientRouter />
 	</head>
-	<body class="antialiased selection:bg-purple-500/30 selection:text-purple-200">
+	<body class="antialiased">
 		<slot />
 	</body>
 </html>
 
 <style is:global>
-	/* Custom scrollbar to keep the "cool" vibe */
-	::-webkit-scrollbar {
-		width: 8px;
-	}
-	::-webkit-scrollbar-track {
-		background: #030303;
-	}
-	::-webkit-scrollbar-thumb {
-		background: #1a1a1a;
-		border-radius: 10px;
-	}
-	::-webkit-scrollbar-thumb:hover {
-		background: #252525;
-	}
+	/* Keep your custom scrollbar or styles here */
+	body { margin: 0; }
 </style>
