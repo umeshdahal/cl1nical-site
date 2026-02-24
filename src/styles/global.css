@@ -1,50 +1,43 @@
 @import "tailwindcss";
 
-/* 1. Theme Configuration (Tailwind 4 Style) */
 @theme {
   --color-terminal-green: #22c55e;
-  --color-accent-purple: #8b5cf6;
+  --color-accent-purple: #a855f7;
 }
 
-/* 2. Global Styles & Cursor Variables */
 @layer base {
   :root {
-    /* These MUST be here for the JS to talk to the CSS */
     --x: 0px;
     --y: 0px;
   }
-
   body {
     @apply bg-[#030303] text-white antialiased overflow-x-hidden;
+    font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   }
 }
 
-/* 3. The Cursor Glow Logic */
-#cursor-glow {
-  /* Using native CSS variables updated by your Layout.astro script */
-  background: radial-gradient(
-    600px circle at var(--x) var(--y), 
-    rgba(139, 92, 246, 0.15), 
-    transparent 40%
-  );
-}
-
-/* 4. Functional Utilities (Terminal & Effects) */
 @layer utilities {
+  #cursor-glow {
+    background: radial-gradient(
+      600px circle at var(--x) var(--y), 
+      rgba(168, 85, 247, 0.15), 
+      transparent 40%
+    );
+  }
+
   .terminal-glow {
     text-shadow: 0 0 10px rgba(34, 197, 94, 0.7);
   }
 
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-
-  /* Scanline Effect */
   .scanlines::after {
     content: " ";
-    @apply absolute inset-0 z-10 pointer-events-none;
+    @apply absolute inset-0 z-50 pointer-events-none;
     background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), 
                 linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
     background-size: 100% 4px, 3px 100%;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }

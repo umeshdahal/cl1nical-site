@@ -1,90 +1,88 @@
 import { motion } from "framer-motion";
-import { Terminal, Zap, Shield, Code2, Cpu, FlaskConical } from "lucide-react";
+import { Code2, Cpu, FlaskConical, ShieldCheck, User } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
 
 export default function Hero() {
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    // Check session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleProfileClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    // Force a fresh session check on click
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (session) {
+      window.location.href = '/profile';
+    } else {
+      window.location.href = '/login';
+    }
+  };
+
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-[#030303] overflow-hidden">
       
-      {/* Background Blobs */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] animate-pulse delay-700" />
+      {/* Top Navigation Auth Button */}
+      <div className="absolute top-8 right-8 z-50">
+        <button 
+          onClick={handleProfileClick}
+          className="flex items-center gap-3 px-4 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur hover:bg-white/10 hover:border-purple-500/50 transition-all group cursor-pointer"
+        >
+          {user ? (
+            <>
+              <span className="text-[10px] font-mono text-gray-400 group-hover:text-purple-400 transition-colors uppercase tracking-widest">
+                ID: {user.email.split('@')[0]}
+              </span>
+              <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center font-bold text-xs shadow-[0_0_15px_rgba(147,51,234,0.4)]">
+                {user.email.charAt(0).toUpperCase()}
+              </div>
+            </>
+          ) : (
+            <>
+              <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest">Guest_Session</span>
+              <ShieldCheck size={18} className="text-purple-500" />
+            </>
+          )}
+        </button>
+      </div>
+
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[120px]" />
       </div>
 
       <motion.div 
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8 }}
-        className="relative z-10 w-full max-w-5xl px-6"
+        className="relative z-10 w-full max-w-5xl px-6 text-center"
       >
-        <div className="flex flex-col items-center text-center space-y-8">
-          
-          <div className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-md text-[10px] font-mono tracking-[0.2em] text-purple-400 uppercase">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-500"></span>
-            </span>
-            System Operational // cl1nical.dev
-          </div>
+        <h1 className="text-7xl md:text-9xl font-black tracking-tighter text-white mb-12 italic">
+          CL1NICAL
+        </h1>
 
-          <motion.h1 
-            className="text-7xl md:text-9xl font-black tracking-tighter text-white select-none"
-            style={{ textShadow: "0 0 40px rgba(168, 85, 247, 0.3)" }}
-          >
-            CL1NICAL
-          </motion.h1>
-
-          <p className="max-w-xl text-gray-400 text-lg md:text-xl font-light">
-            Architecting <span className="text-white font-medium">high-performance</span> digital systems with a focus on privacy, speed, and open-source infrastructure.
-          </p>
-
-          {/* New Multi-Button Navigation */}
-          <div className="flex flex-wrap items-center justify-center gap-4 mt-4">
-            <motion.a 
-              href="/projects"
-              whileHover={{ scale: 1.05, y: -2 }}
-              className="px-8 py-4 bg-white text-black font-bold rounded-xl flex items-center gap-2 transition-shadow hover:shadow-[0_0_25px_rgba(255,255,255,0.2)]"
-            >
-              PROJECTS <Code2 size={18} />
-            </motion.a>
-
-            <motion.a 
-              href="/lab"
-              whileHover={{ scale: 1.05, y: -2 }}
-              className="px-8 py-4 border border-white/20 text-white font-bold rounded-xl flex items-center gap-2 hover:bg-white/5 transition-all"
-            >
-              ACCESS_LAB <FlaskConical size={18} />
-            </motion.a>
-
-            <motion.a 
-              href="/stack"
-              whileHover={{ scale: 1.05, y: -2 }}
-              className="px-8 py-4 border border-white/20 text-white font-bold rounded-xl flex items-center gap-2 hover:bg-white/5 transition-all"
-            >
-              STACK <Cpu size={18} />
-            </motion.a>
-          </div>
-
-          {/* Feature Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full mt-12">
-            {[
-              { icon: <Terminal size={20}/>, label: "Self-Hosted", desc: "Linux & Docker" },
-              { icon: <Zap size={20}/>, label: "Astro 5.0", desc: "Edge Optimized" },
-              { icon: <Shield size={20}/>, label: "Secured", desc: "Hardened Core" }
-            ].map((item, i) => (
-              <motion.div 
-                key={i}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 + (i * 0.1) }}
-                className="flex flex-col items-start p-6 rounded-2xl border border-white/5 bg-white/5 backdrop-blur-sm hover:border-purple-500/30 transition-colors text-left group"
-              >
-                <div className="text-gray-400 mb-3 group-hover:text-purple-400 transition-colors">{item.icon}</div>
-                <span className="text-sm font-bold uppercase tracking-widest text-white">{item.label}</span>
-                <span className="text-xs text-gray-500 font-mono mt-1">{item.desc}</span>
-              </motion.div>
-            ))}
-          </div>
+        <div className="flex flex-wrap items-center justify-center gap-6">
+          <motion.a href="/projects" whileHover={{ scale: 1.05 }} className="px-8 py-4 bg-white text-black font-bold rounded-xl flex items-center gap-2 shadow-xl">
+            PROJECTS <Code2 size={18} />
+          </motion.a>
+          <motion.a href="/lab" whileHover={{ scale: 1.05 }} className="px-8 py-4 border border-white/20 text-white font-bold rounded-xl flex items-center gap-2">
+            LAB <FlaskConical size={18} />
+          </motion.a>
+          <motion.a href="/stack" whileHover={{ scale: 1.05 }} className="px-8 py-4 border border-white/20 text-white font-bold rounded-xl flex items-center gap-2">
+            STACK <Cpu size={18} />
+          </motion.a>
         </div>
       </motion.div>
     </div>

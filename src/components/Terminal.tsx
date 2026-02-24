@@ -1,74 +1,95 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { supabase } from '../lib/supabase';
 
 const COMMANDS = {
-  help: "Available commands: [help, clear, projects, whoami, stack, social]",
-  whoami: "User: cl1nical | Status: Lead Architect | Location: encrypted",
-  stack: "Astro 5.0, Tailwind 4, React 19, Framer Motion, Docker, Linux",
-  projects: "Redirecting to /projects...",
-  social: "Github: github.com/cl1nical | Twitter: @cl1nical_dev",
+  help: "AVAILABLE: [help, clear, projects, login, profile, whoami, stack, ping, exit]",
+  whoami: "IDENT: cl1nical | ROLE: Architect | STATUS: Online",
+  stack: "Astro 5.0 // Tailwind 4 // React 19 // Supabase // Framer",
+  ping: "PONG! Response time: 09ms",
+  projects: "Opening project database...",
+  login: "Redirecting to authentication portal...",
+  profile: "Accessing user identity settings...",
+  exit: "Terminating secure session..."
 };
 
 export default function TerminalUI() {
   const [input, setInput] = useState('');
-  const [history, setHistory] = useState<string[]>(["System initialized...", "Type 'help' to begin."]);
+  const [history, setHistory] = useState<string[]>(["Connection established...", "Terminal v4.0.1 Ready.", "Type 'help' for available directives."]);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     scrollRef.current?.scrollTo(0, scrollRef.current.scrollHeight);
   }, [history]);
 
-  const handleCommand = (e: React.FormEvent) => {
+  const handleCommand = async (e: React.FormEvent) => {
     e.preventDefault();
     const cmd = input.toLowerCase().trim();
-    let response = `Command not found: ${cmd}`;
-
+    
     if (cmd === 'clear') {
       setHistory([]);
-    } else if (cmd === 'projects') {
-      window.location.href = '/projects';
-    } else if (COMMANDS[cmd as keyof typeof COMMANDS]) {
-      response = COMMANDS[cmd as keyof typeof COMMANDS];
-      setHistory([...history, `> ${input}`, response]);
+      setInput('');
+      return;
+    }
+
+    const navCommands = ['login', 'projects', 'profile'];
+    if (navCommands.includes(cmd)) {
+      setHistory([...history, `> ${input}`, COMMANDS[cmd as keyof typeof COMMANDS]]);
+      setTimeout(() => window.location.href = `/${cmd}`, 800);
+      setInput('');
+      return;
+    }
+
+    if (cmd === 'exit') {
+      setHistory([...history, `> ${input}`, COMMANDS.exit]);
+      await supabase.auth.signOut();
+      setTimeout(() => window.location.href = '/', 800);
+      setInput('');
+      return;
+    }
+
+    if (COMMANDS[cmd as keyof typeof COMMANDS]) {
+      setHistory([...history, `> ${input}`, COMMANDS[cmd as keyof typeof COMMANDS]]);
     } else if (cmd !== '') {
-      setHistory([...history, `> ${input}`, response]);
+      setHistory([...history, `> ${input}`, `ERR: Command '${cmd}' unrecognized.`]);
     }
     
     setInput('');
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto h-[500px] bg-black/90 border border-green-500/30 rounded-lg shadow-[0_0_40px_rgba(34,197,94,0.1)] flex flex-col overflow-hidden font-mono relative">
-      {/* Scanline Effect Overlay */}
-      <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_4px,3px_100%] z-20"></div>
-
-      {/* Terminal Header */}
-      <div className="flex items-center gap-2 px-4 py-2 bg-white/5 border-b border-white/10 text-xs text-gray-500">
-        <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/40" />
-            <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/40" />
-            <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/40" />
+    <div className="w-full h-[500px] bg-black/80 border border-green-500/20 rounded-xl flex flex-col overflow-hidden font-mono shadow-[0_0_60px_rgba(0,0,0,1)] relative z-10">
+      <div className="flex items-center justify-between px-4 py-3 bg-white/5 border-b border-white/5">
+        <div className="flex gap-2">
+            <div className="w-2.5 h-2.5 rounded-full bg-red-500/40" />
+            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/40" />
+            <div className="w-2.5 h-2.5 rounded-full bg-green-500/40" />
         </div>
-        <span className="ml-2">cl1nical@lab:~</span>
+        <span className="text-[10px] text-gray-600 tracking-widest uppercase">Console_Output</span>
       </div>
 
-      {/* Terminal Body */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-2 scrollbar-hide text-green-500 text-sm md:text-base selection:bg-green-500 selection:text-black">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 space-y-2 scrollbar-hide">
         {history.map((line, i) => (
-          <motion.p initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} key={i} className="leading-relaxed">
+          <motion.p 
+            initial={{ opacity: 0, x: -5 }} 
+            animate={{ opacity: 1, x: 0 }} 
+            key={i} 
+            className={`${line.startsWith('>') ? 'text-white' : 'text-green-500/80'} text-sm leading-relaxed terminal-glow`}
+          >
             {line}
           </motion.p>
         ))}
         
-        <form onSubmit={handleCommand} className="flex items-center gap-2">
+        <form onSubmit={handleCommand} className="flex items-center gap-2 mt-4">
           <span className="text-green-500 font-bold">$</span>
           <input
             autoFocus
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            className="flex-1 bg-transparent border-none outline-none text-green-400 focus:ring-0 p-0"
+            className="flex-1 bg-transparent border-none outline-none text-green-400 focus:ring-0 p-0 text-sm"
             spellCheck="false"
+            autoComplete="off"
           />
         </form>
       </div>

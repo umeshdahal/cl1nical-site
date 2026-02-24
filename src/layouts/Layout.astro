@@ -15,59 +15,43 @@ const { title } = Astro.props;
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="generator" content={Astro.generator} />
 		<title>{title}</title>
-		
 		<ClientRouter />
 	</head>
-	<body class="antialiased text-white selection:bg-purple-500/30 selection:text-purple-200 min-h-screen">
+	<body class="antialiased text-white selection:bg-purple-500/30 selection:text-purple-200 min-h-screen relative overflow-x-hidden">
 		
 		<div 
 			id="cursor-glow" 
-			class="pointer-events-none fixed inset-0 z-50 transition-opacity duration-300 opacity-0"
+			transition:persist
+			class="pointer-events-none fixed inset-0 z-[9999] transition-opacity duration-300 opacity-0"
 		></div>
 
-		<slot />
+		<div class="relative z-10">
+			<slot />
+		</div>
 
 		<script is:inline>
-			/**
-			 * Cursor Tracking Logic
-			 * We use is:inline to make sure this executes immediately on load.
-			 */
-			const glow = document.getElementById('cursor-glow');
-			
-			const handleMouseMove = (e) => {
+			// Optimized global handler
+			const moveGlow = (e) => {
+				const glow = document.getElementById('cursor-glow');
 				if (!glow) return;
 				
-				// Reveal glow on first movement
-				glow.style.opacity = '1';
+				if (glow.style.opacity !== '1') glow.style.opacity = '1';
 				
-				// Update CSS variables defined in global.css
 				glow.style.setProperty('--x', `${e.clientX}px`);
 				glow.style.setProperty('--y', `${e.clientY}px`);
 			};
 
-			// Re-run the listener setup whenever Astro swaps pages
-			document.addEventListener('mousemove', handleMouseMove);
-			
-			// Support for Astro View Transitions (re-bind after page change)
-			document.addEventListener('astro:after-swap', () => {
-				document.addEventListener('mousemove', handleMouseMove);
-			});
+			// Persistent listener attachment
+			function attachGlow() {
+				window.removeEventListener('mousemove', moveGlow);
+				window.addEventListener('mousemove', moveGlow);
+			}
+
+			// Initialize on every Astro event
+			attachGlow();
+			document.addEventListener('astro:page-load', attachGlow);
+			document.addEventListener('astro:after-swap', attachGlow);
 		</script>
 	</body>
 </html>
-
-<style is:global>
-	/* Ensures the page height is consistent during transitions */
-	html, body {
-		height: 100%;
-		margin: 0;
-		padding: 0;
-	}
-
-	/* Keep the background dark even before Tailwind loads */
-	body {
-		background-color: #030303;
-	}
-</style>
