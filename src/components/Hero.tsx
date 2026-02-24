@@ -99,7 +99,7 @@ export default function Hero() {
         className="relative z-10 w-full max-w-5xl px-6 text-center"
       >
         <h1 className="text-7xl md:text-9xl font-black tracking-tighter text-white mb-12 italic">
-          chup lag muji
+          let's play pixelmon
         </h1>
 
 
