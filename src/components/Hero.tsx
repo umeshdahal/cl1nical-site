@@ -102,6 +102,7 @@ export default function Hero() {
           chup lag muji
         </h1>
 
+
         <div className="flex flex-wrap items-center justify-center gap-6">
           <motion.a href="/projects" whileHover={{ scale: 1.05 }} className="px-8 py-4 bg-white text-black font-bold rounded-xl flex items-center gap-2 shadow-xl">
             PROJECTS <Code2 size={18} />
