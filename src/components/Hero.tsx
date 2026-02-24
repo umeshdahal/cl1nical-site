@@ -1,46 +1,74 @@
 import { motion } from "framer-motion";
-import { Code2, Cpu, FlaskConical, ShieldCheck, User } from "lucide-react";
+import { Code2, Cpu, FlaskConical, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
 
 export default function Hero() {
   const [user, setUser] = useState<any>(null);
+  
+  // Game State
+  const [dice, setDice] = useState(1);
+  const [rolls, setRolls] = useState(0);
+  const [sixes, setSixes] = useState(0);
+  const [inHome, setInHome] = useState(0); // Counter for how many are in home
 
   useEffect(() => {
-    // Check session on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
-
-    // Listen for changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
-
     return () => subscription.unsubscribe();
   }, []);
 
+  const handleRoll = () => {
+    let newValue: number;
+    const chance = Math.random();
+
+    // Probability Logic
+    if (sixes === 0 && rolls < 5) {
+      // 60% chance for first 6
+      newValue = chance < 0.6 ? 6 : Math.floor(Math.random() * 5) + 1;
+    } else if (sixes === 1) {
+      // 40% chance for second 6
+      newValue = chance < 0.4 ? 6 : Math.floor(Math.random() * 5) + 1;
+    } else {
+      // Random after two 6s
+      newValue = Math.floor(Math.random() * 6) + 1;
+    }
+
+    if (newValue === 6) setSixes(s => s + 1);
+    setRolls(r => r + 1);
+    setDice(newValue);
+  };
+
   const handleProfileClick = async (e: React.MouseEvent) => {
     e.preventDefault();
-    // Force a fresh session check on click
     const { data: { session } } = await supabase.auth.getSession();
-    
-    if (session) {
-      window.location.href = '/profile';
-    } else {
-      window.location.href = '/login';
-    }
+    window.location.href = session ? '/profile' : '/login';
   };
 
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-[#030303] overflow-hidden">
       
-      {/* Top Navigation Auth Button */}
-      <div className="absolute top-8 right-8 z-50">
-        <button 
-          onClick={handleProfileClick}
-          className="flex items-center gap-3 px-4 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur hover:bg-white/10 hover:border-purple-500/50 transition-all group cursor-pointer"
+      {/* DICE & HOME COUNTER - Top Center */}
+      <div className="absolute top-8 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-3">
+        <div className="px-4 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-mono text-gray-400 uppercase tracking-widest">
+          Home_Status: <span className="text-white">{inHome}</span>
+        </div>
+        <motion.button 
+          whileTap={{ scale: 0.9 }}
+          onClick={handleRoll}
+          className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-[0_0_20px_rgba(255,255,255,0.15)] cursor-pointer"
         >
+          <span className="text-3xl font-black text-black">{dice}</span>
+        </motion.button>
+      </div>
+
+      {/* Auth Button (Stayed Top Right) */}
+      <div className="absolute top-8 right-8 z-50">
+        <button onClick={handleProfileClick} className="flex items-center gap-3 px-4 py-2 rounded-full border border-white/10 bg-white/5 backdrop-blur hover:bg-white/10 hover:border-purple-500/50 transition-all group cursor-pointer">
           {user ? (
             <>
               <span className="text-[10px] font-mono text-gray-400 group-hover:text-purple-400 transition-colors uppercase tracking-widest">
@@ -59,9 +87,10 @@ export default function Hero() {
         </button>
       </div>
 
+      {/* Background Orbs with Swapped Colors (Red Left, Yellow Right) */}
       <div className="absolute inset-0 z-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-purple-600/10 rounded-full blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[120px]" />
+        <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] bg-red-600/10 rounded-full blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[600px] h-[600px] bg-yellow-600/10 rounded-full blur-[120px]" />
       </div>
 
       <motion.div 
@@ -70,7 +99,7 @@ export default function Hero() {
         className="relative z-10 w-full max-w-5xl px-6 text-center"
       >
         <h1 className="text-7xl md:text-9xl font-black tracking-tighter text-white mb-12 italic">
-          CL1NICAL
+          chup lag muji
         </h1>
 
         <div className="flex flex-wrap items-center justify-center gap-6">
