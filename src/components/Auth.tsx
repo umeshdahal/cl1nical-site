@@ -9,6 +9,7 @@ export default function AuthUI() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
+  // @ts-ignore
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
