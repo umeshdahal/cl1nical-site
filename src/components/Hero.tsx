@@ -2,9 +2,8 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   TrendingUp, Eye,
-  Copy, Check, Loader2, Database, Globe, Shield,
-  ArrowRight, Terminal, Zap, Activity, Wifi, Cpu,
-  FileSpreadsheet, Image, Mic, BarChart3, Users, Search
+  Copy, Check, Loader2, Database, Globe,
+  ArrowRight, Zap, Activity, Wifi, Cpu, Search
 } from "lucide-react";
 import { API_CONFIG } from '../lib/supabase';
 
