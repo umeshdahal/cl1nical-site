@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  FileText, Upload, Download, Search, TrendingUp, Eye, 
+  TrendingUp, Eye, 
   Copy, Check, Loader2, Database, Globe, Shield, 
   ArrowRight, Terminal, Zap, Activity, Wifi, Cpu,
   FileSpreadsheet, Image, Mic, BarChart3, Users
@@ -83,7 +83,6 @@ const ParticleNetwork = () => {
 
 // Fix: Explicit color mapping to prevent Tailwind JIT from dropping dynamic classes
 const TAB_COLORS = {
-  cyan: { bg: 'bg-cyan-500/20', text: 'text-cyan-300', border: 'border-cyan-500/40', shadow: 'shadow-[0_0_15px_rgba(0,255,255,0.1)]' },
   purple: { bg: 'bg-purple-500/20', text: 'text-purple-300', border: 'border-purple-500/40', shadow: 'shadow-[0_0_15px_rgba(168,85,247,0.1)]' },
   blue: { bg: 'bg-blue-500/20', text: 'text-blue-300', border: 'border-blue-500/40', shadow: 'shadow-[0_0_15px_rgba(59,130,246,0.1)]' },
   emerald: { bg: 'bg-emerald-500/20', text: 'text-emerald-300', border: 'border-emerald-500/40', shadow: 'shadow-[0_0_15px_rgba(16,185,129,0.1)]' },
@@ -92,112 +91,6 @@ const TAB_COLORS = {
 // Fix: Replace `any` with strict interfaces
 interface EarningItem { type: string; date: string; title: string; link: string; }
 interface ReepEntity { reep_id: string; name: string; type: string; dob: string; nationality: string; position: string; ids: Record<string, string>; }
-
-// --- Module 1: CONVERT (Conversion Tools API) ---
-const ConvertModule = () => {
-  const [url, setUrl] = useState('');
-  const [format, setFormat] = useState('pdf');
-  const [status, setStatus] = useState<'idle' | 'uploading' | 'converting' | 'success' | 'error'>('idle');
-  const [progress, setProgress] = useState(0);
-  const [resultUrl, setResultUrl] = useState('');
-
-  const handleConvert = async () => {
-    if (!url) return;
-    setStatus('uploading'); setProgress(0);
-    
-    if (!API_CONFIG.CONVERSION_TOOLS_API_KEY) {
-      // Fallback simulation if key is missing
-      const interval = setInterval(() => {
-        setProgress(p => {
-          if (p >= 100) { clearInterval(interval); setStatus('success'); setResultUrl('#'); return 100; }
-          return p + Math.random() * 15;
-        });
-      }, 200);
-      return;
-    }
-
-    try {
-      const response = await fetch('https://api.conversiontools.io/v1/tasks', {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${API_CONFIG.CONVERSION_TOOLS_API_KEY}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source_url: url, target_format: format })
-      });
-      if (!response.ok) throw new Error('Conversion failed');
-      const result = await response.json();
-      setStatus('success');
-      setResultUrl(result.download_url || '#');
-    } catch (err) {
-      setStatus('error');
-      console.error('Conversion Error:', err);
-    }
-  };
-
-  return (
-    <div className="w-full max-w-3xl mx-auto space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-[10px] font-mono text-cyan-400 tracking-widest uppercase">Source URL / File</label>
-          <input 
-            value={url} onChange={e => setUrl(e.target.value)}
-            placeholder="https://example.com/document.docx"
-            className="w-full bg-black/40 border border-cyan-500/30 rounded-lg px-4 py-3 text-sm text-white placeholder-gray-600 focus:outline-none focus:border-cyan-400 transition-colors"
-          />
-        </div>
-        <div className="space-y-2">
-          <label className="text-[10px] font-mono text-cyan-400 tracking-widest uppercase">Target Format</label>
-          <select 
-            value={format} onChange={e => setFormat(e.target.value)}
-            className="w-full bg-black/40 border border-cyan-500/30 rounded-lg px-4 py-3 text-sm text-white focus:outline-none focus:border-cyan-400 transition-colors appearance-none"
-          >
-            <option value="pdf">PDF Document</option>
-            <option value="jpg">JPG Image</option>
-            <option value="png">PNG Image</option>
-            <option value="mp3">Audio MP3</option>
-            <option value="csv">CSV Data</option>
-            <option value="excel">Excel Spreadsheet</option>
-          </select>
-        </div>
-      </div>
-
-      <button 
-        onClick={handleConvert} disabled={status !== 'idle' && status !== 'success'}
-        className="w-full py-4 bg-cyan-500/10 border border-cyan-500/40 hover:bg-cyan-500/20 text-cyan-300 font-mono text-sm tracking-widest rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {status === 'idle' || status === 'success' ? <><Upload size={16} /> INITIATE CONVERSION</> : <Loader2 size={16} className="animate-spin" />}
-      </button>
-
-      <AnimatePresence>
-        {(status === 'uploading' || status === 'converting') && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="space-y-2">
-            <div className="flex justify-between text-[10px] font-mono text-gray-400">
-              <span>PROCESSING...</span>
-              <span>{Math.min(Math.round(progress), 100)}%</span>
-            </div>
-            <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
-              <motion.div className="h-full bg-cyan-400" style={{ width: `${Math.min(progress, 100)}%` }} />
-            </div>
-          </motion.div>
-        )}
-        {status === 'success' && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Check size={18} className="text-green-400" />
-              <span className="text-sm text-green-300 font-mono">CONVERSION COMPLETE</span>
-            </div>
-            <button className="px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-300 text-xs font-mono rounded flex items-center gap-2 transition-colors">
-              <Download size={14} /> DOWNLOAD
-            </button>
-          </motion.div>
-        )}
-        {status === 'error' && (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-300 text-sm font-mono">
-            CONVERSION FAILED. CHECK API KEY OR URL.
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
 
 // --- Module 2: EARNINGS (Earnings Feed API) ---
 const EarningsModule = () => {
@@ -450,12 +343,11 @@ const ReepModule = () => {
 
 // --- Main Hero Component ---
 export default function Hero() {
-  const [activeTab, setActiveTab] = useState('convert');
+  const [activeTab, setActiveTab] = useState('earnings');
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
 
   const tabs = [
-    { id: 'convert', label: 'CONVERT', icon: <FileText size={14} />, color: 'cyan' as const },
     { id: 'earnings', label: 'EARNINGS', icon: <TrendingUp size={14} />, color: 'purple' as const },
     { id: 'vision', label: 'VISION', icon: <Eye size={14} />, color: 'blue' as const },
     { id: 'reep', label: 'REEP', icon: <Globe size={14} />, color: 'emerald' as const },
@@ -535,7 +427,6 @@ export default function Hero() {
               exit={{ opacity: 0, y: -10 }}
               transition={{ duration: 0.3 }}
             >
-              {activeTab === 'convert' && <ConvertModule />}
               {activeTab === 'earnings' && <EarningsModule />}
               {activeTab === 'vision' && <VisionModule />}
               {activeTab === 'reep' && <ReepModule />}
