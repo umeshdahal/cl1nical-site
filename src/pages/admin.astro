@@ -1,13 +1,14 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { supabase } from '../lib/supabase';
 import { ShieldCheck, Clock, Mail } from 'lucide-react';
 
-// Fetch real users from your Supabase 'profiles' table
-const { data: users, error } = await supabase
-  .from('profiles')
-  .select('*')
-  .order('created_at', { ascending: false });
+// TODO: Replace with your new backend API call to fetch users
+// Example:
+// const res = await fetch('https://your-api.com/admin/users', { headers: { 'Authorization': `Bearer ${process.env.ADMIN_KEY}` } });
+// const { data: users, error } = await res.json();
+
+const users = []; // Placeholder until new auth/backend is connected
+const error = null;
 ---
 
 <Layout title="Admin Central | cl1nical">
@@ -48,6 +49,7 @@ const { data: users, error } = await supabase
         </tbody>
       </table>
       {error && <div class="p-10 text-center text-red-500">Error fetching data: {error.message}</div>}
+      {users?.length === 0 && !error && <div class="p-10 text-center text-gray-500 font-mono text-xs tracking-widest">NO USERS FOUND. CONNECT BACKEND TO POPULATE.</div>}
     </div>
   </main>
 </Layout>
