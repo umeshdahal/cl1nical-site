@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { supabase } from '../lib/supabase';
 
 export default function AuthUI() {
   const [isLogin, setIsLogin] = useState(true);
@@ -9,28 +8,31 @@ export default function AuthUI() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
-  // @ts-ignore
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage('');
 
     try {
+      // TODO: Replace with your new Auth API call
+      // Example:
+      // const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+      // const res = await fetch(endpoint, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ email, password })
+      // });
+      // if (!res.ok) throw new Error('Authentication failed');
+      
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        console.log('Login requested for:', email);
         window.location.href = '/'; // Redirect home on success
       } else {
-        const { error } = await supabase.auth.signUp({ 
-          email, 
-          password,
-          options: { data: { role: 'user' } }
-        });
-        if (error) throw error;
+        console.log('Registration requested for:', email);
         setMessage('Registration successful! Check your email for a link.');
       }
     } catch (error: any) {
-      setMessage(error.message);
+      setMessage(error.message || 'Authentication failed');
     } finally {
       setLoading(false);
     }

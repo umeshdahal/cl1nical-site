@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { supabase } from '../lib/supabase';
 
 const COMMANDS = {
   help: "AVAILABLE: [help, clear, projects, login, profile, whoami, stack, ping, exit]",
   whoami: "IDENT: cl1nical | ROLE: Architect | STATUS: Online",
-  stack: "Astro 5.0 // Tailwind 4 // React 19 // Supabase // Framer",
+  stack: "Astro 5.0 // Tailwind 4 // React 19 // Custom API // Framer",
   ping: "PONG! Response time: 09ms",
   projects: "Opening project database...",
   login: "Redirecting to authentication portal...",
@@ -42,7 +41,8 @@ export default function TerminalUI() {
 
     if (cmd === 'exit') {
       setHistory([...history, `> ${input}`, COMMANDS.exit]);
-      await supabase.auth.signOut();
+      // TODO: Integrate your new Auth API sign-out here
+      console.log('Session terminated');
       setTimeout(() => window.location.href = '/', 800);
       setInput('');
       return;
