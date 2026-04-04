@@ -1,0 +1,17 @@
+---
+export async function POST({ request }) {
+  const { url, format } = await request.json();
+  
+  const response = await fetch('https://api.conversiontools.io/v1/tasks', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${import.meta.env.CONVERSION_TOOLS_API_KEY}`
+    },
+    body: JSON.stringify({ type: `convert.${format}`, options: { url } })
+  });
+
+  const data = await response.json();
+  return new Response(JSON.stringify(data), { status: response.status });
+}
+---
