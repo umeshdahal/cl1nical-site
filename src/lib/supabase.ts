@@ -1,8 +1,9 @@
-import { createClient } from '@supabase/supabase-js';
+// API Configuration
+// Add your new API keys to the .env file at the root of your project.
+// The PUBLIC_ prefix is required by Astro to expose variables to client-side code.
 
-// During build, import.meta.env might be empty. 
-// We provide fallbacks to prevent the "supabaseUrl is required" crash.
-const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
-const supabaseAnonKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY || 'placeholder';
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const API_CONFIG = {
+  NEW_SERVICE_KEY: import.meta.env.PUBLIC_NEW_SERVICE_KEY || '',
+  ANOTHER_API_KEY: import.meta.env.PUBLIC_ANOTHER_API_KEY || '',
+  // Add more keys here as needed for your new features
+};
