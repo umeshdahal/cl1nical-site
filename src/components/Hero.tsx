@@ -6,6 +6,7 @@ import {
   ArrowRight, Terminal, Zap, Activity, Wifi, Cpu,
   FileSpreadsheet, Image, Mic, BarChart3, Users
 } from "lucide-react";
+import { API_CONFIG } from '../lib/supabase';
 
 // --- Interactive Particle Network (Optimized) ---
 const ParticleNetwork = () => {
@@ -80,6 +81,18 @@ const ParticleNetwork = () => {
   return <canvas ref={canvasRef} className="absolute inset-0 z-0 pointer-events-none" />;
 };
 
+// Fix: Explicit color mapping to prevent Tailwind JIT from dropping dynamic classes
+const TAB_COLORS = {
+  cyan: { bg: 'bg-cyan-500/20', text: 'text-cyan-300', border: 'border-cyan-500/40', shadow: 'shadow-[0_0_15px_rgba(0,255,255,0.1)]' },
+  purple: { bg: 'bg-purple-500/20', text: 'text-purple-300', border: 'border-purple-500/40', shadow: 'shadow-[0_0_15px_rgba(168,85,247,0.1)]' },
+  blue: { bg: 'bg-blue-500/20', text: 'text-blue-300', border: 'border-blue-500/40', shadow: 'shadow-[0_0_15px_rgba(59,130,246,0.1)]' },
+  emerald: { bg: 'bg-emerald-500/20', text: 'text-emerald-300', border: 'border-emerald-500/40', shadow: 'shadow-[0_0_15px_rgba(16,185,129,0.1)]' },
+} as const;
+
+// Fix: Replace `any` with strict interfaces
+interface EarningItem { type: string; date: string; title: string; link: string; }
+interface ReepEntity { reep_id: string; name: string; type: string; dob: string; nationality: string; position: string; ids: Record<string, string>; }
+
 // --- Module 1: CONVERT (Conversion Tools API) ---
 const ConvertModule = () => {
   const [url, setUrl] = useState('');
@@ -92,19 +105,31 @@ const ConvertModule = () => {
     if (!url) return;
     setStatus('uploading'); setProgress(0);
     
-    // Simulate API flow: Upload -> Convert -> Success
-    // TODO: Replace with actual fetch to https://api.conversiontools.io/v1/files & /tasks
-    const interval = setInterval(() => {
-      setProgress(p => {
-        if (p >= 100) {
-          clearInterval(interval);
-          setStatus('success');
-          setResultUrl('#');
-          return 100;
-        }
-        return p + Math.random() * 15;
+    if (!API_CONFIG.CONVERSION_TOOLS_API_KEY) {
+      // Fallback simulation if key is missing
+      const interval = setInterval(() => {
+        setProgress(p => {
+          if (p >= 100) { clearInterval(interval); setStatus('success'); setResultUrl('#'); return 100; }
+          return p + Math.random() * 15;
+        });
+      }, 200);
+      return;
+    }
+
+    try {
+      const response = await fetch('https://api.conversiontools.io/v1/tasks', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${API_CONFIG.CONVERSION_TOOLS_API_KEY}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ source_url: url, target_format: format })
       });
-    }, 200);
+      if (!response.ok) throw new Error('Conversion failed');
+      const result = await response.json();
+      setStatus('success');
+      setResultUrl(result.download_url || '#');
+    } catch (err) {
+      setStatus('error');
+      console.error('Conversion Error:', err);
+    }
   };
 
   return (
@@ -164,6 +189,11 @@ const ConvertModule = () => {
             </button>
           </motion.div>
         )}
+        {status === 'error' && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg text-red-300 text-sm font-mono">
+            CONVERSION FAILED. CHECK API KEY OR URL.
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   );
@@ -173,21 +203,37 @@ const ConvertModule = () => {
 const EarningsModule = () => {
   const [ticker, setTicker] = useState('');
   const [loading, setLoading] = useState(false);
-  const [data, setData] = useState<any[]>([]);
+  const [data, setData] = useState<EarningItem[]>([]);
 
   const handleScan = async () => {
     if (!ticker) return;
     setLoading(true);
-    // TODO: Replace with actual fetch to Earnings Feed API
-    setTimeout(() => {
-      setData([
-        { type: '10-K', date: '2024-02-15', title: 'Annual Report', link: '#' },
-        { type: '10-Q', date: '2024-05-01', title: 'Quarterly Report', link: '#' },
-        { type: '8-K', date: '2024-06-12', title: 'Executive Change', link: '#' },
-        { type: 'INSIDER', date: '2024-06-10', title: 'CEO Purchase: 50,000 shares', link: '#' },
-      ]);
+    
+    if (!API_CONFIG.EARNINGS_FEED_API_KEY) {
+      setTimeout(() => {
+        setData([
+          { type: '10-K', date: '2024-02-15', title: 'Annual Report', link: '#' },
+          { type: '10-Q', date: '2024-05-01', title: 'Quarterly Report', link: '#' },
+          { type: '8-K', date: '2024-06-12', title: 'Executive Change', link: '#' },
+          { type: 'INSIDER', date: '2024-06-10', title: 'CEO Purchase: 50,000 shares', link: '#' },
+        ]);
+        setLoading(false);
+      }, 1200);
+      return;
+    }
+
+    try {
+      const res = await fetch(`https://api.earningsfeed.com/v1/ticker/${ticker}`, {
+        headers: { 'Authorization': `Bearer ${API_CONFIG.EARNINGS_FEED_API_KEY}` }
+      });
+      if (!res.ok) throw new Error('Fetch failed');
+      const json = await res.json();
+      setData(json.results || []);
+    } catch (err) {
+      console.error('Earnings Fetch Error:', err);
+    } finally {
       setLoading(false);
-    }, 1200);
+    }
   };
 
   return (
@@ -242,11 +288,34 @@ const VisionModule = () => {
   const handleExtract = async () => {
     if (!imageUrl) return;
     setLoading(true); setExtractedText('');
-    // TODO: Replace with actual fetch to https://api.ocr.space/parse/image
-    setTimeout(() => {
-      setExtractedText(`INVOICE #9942\nDATE: 2024-06-15\nAMOUNT: $1,240.50\nVENDOR: NEXUS SYSTEMS LTD.\nSTATUS: PAID\n\n[OCR CONFIDENCE: 98.4%]`);
+    
+    if (!API_CONFIG.OCR_SPACE_API_KEY) {
+      setTimeout(() => {
+        setExtractedText(`INVOICE #9942\nDATE: 2024-06-15\nAMOUNT: $1,240.50\nVENDOR: NEXUS SYSTEMS LTD.\nSTATUS: PAID\n\n[OCR CONFIDENCE: 98.4%]`);
+        setLoading(false);
+      }, 1500);
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('url', imageUrl);
+      formData.append('apikey', API_CONFIG.OCR_SPACE_API_KEY);
+      formData.append('language', 'eng');
+
+      const res = await fetch('https://api.ocr.space/parse/image', { method: 'POST', body: formData });
+      const json = await res.json();
+      if (json.OCRExitCode === 1) {
+        setExtractedText(json.ParsedResults[0].ParsedText);
+      } else {
+        throw new Error(json.ErrorMessage || 'OCR Failed');
+      }
+    } catch (err) {
+      console.error('OCR Error:', err);
+      setExtractedText('ERROR EXTRACTING TEXT. CHECK API KEY OR URL.');
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   const copyToClipboard = () => {
@@ -290,24 +359,40 @@ const ReepModule = () => {
   const [query, setQuery] = useState('');
   const [provider, setProvider] = useState('transfermarkt');
   const [loading, setLoading] = useState(false);
-  const [entity, setEntity] = useState<any>(null);
+  const [entity, setEntity] = useState<ReepEntity | null>(null);
 
   const handleResolve = async () => {
     if (!query) return;
     setLoading(true); setEntity(null);
-    // TODO: Replace with actual fetch to https://the-reep-register.p.rapidapi.com/resolve
-    setTimeout(() => {
-      setEntity({
-        reep_id: 'reep_p2804f5db',
-        name: 'Cole Palmer',
-        type: 'player',
-        dob: '2002-05-06',
-        nationality: 'England',
-        position: 'Attacking Midfielder',
-        ids: { transfermarkt: '568177', fbref: 'dc7f8a28', sofascore: '982780', opta: '7cwgrmorsb42qaj5vrhp8fhzp', premier_league: '49293' }
+    
+    if (!API_CONFIG.RAPIDAPI_KEY) {
+      setTimeout(() => {
+        setEntity({
+          reep_id: 'reep_p2804f5db',
+          name: 'Cole Palmer',
+          type: 'player',
+          dob: '2002-05-06',
+          nationality: 'England',
+          position: 'Attacking Midfielder',
+          ids: { transfermarkt: '568177', fbref: 'dc7f8a28', sofascore: '982780', opta: '7cwgrmorsb42qaj5vrhp8fhzp', premier_league: '49293' }
+        });
+        setLoading(false);
+      }, 1000);
+      return;
+    }
+
+    try {
+      const res = await fetch(`https://the-reep-register.p.rapidapi.com/resolve?q=${encodeURIComponent(query)}&provider=${provider}`, {
+        headers: { 'X-RapidAPI-Key': API_CONFIG.RAPIDAPI_KEY, 'X-RapidAPI-Host': 'the-reep-register.p.rapidapi.com' }
       });
+      if (!res.ok) throw new Error('Resolve failed');
+      const json = await res.json();
+      setEntity(json);
+    } catch (err) {
+      console.error('REEP Resolve Error:', err);
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -352,7 +437,7 @@ const ReepModule = () => {
               {Object.entries(entity.ids).map(([key, val]) => (
                 <div key={key} className="p-2 bg-white/5 rounded border border-white/10">
                   <div className="text-[10px] text-gray-500 uppercase tracking-wider">{key.replace('_', ' ')}</div>
-                  <div className="text-sm text-white font-mono truncate">{val as string}</div>
+                  <div className="text-sm text-white font-mono truncate">{val}</div>
                 </div>
               ))}
             </div>
@@ -370,10 +455,10 @@ export default function Hero() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const tabs = [
-    { id: 'convert', label: 'CONVERT', icon: <FileText size={14} />, color: 'cyan' },
-    { id: 'earnings', label: 'EARNINGS', icon: <TrendingUp size={14} />, color: 'purple' },
-    { id: 'vision', label: 'VISION', icon: <Eye size={14} />, color: 'blue' },
-    { id: 'reep', label: 'REEP', icon: <Globe size={14} />, color: 'emerald' },
+    { id: 'convert', label: 'CONVERT', icon: <FileText size={14} />, color: 'cyan' as const },
+    { id: 'earnings', label: 'EARNINGS', icon: <TrendingUp size={14} />, color: 'purple' as const },
+    { id: 'vision', label: 'VISION', icon: <Eye size={14} />, color: 'blue' as const },
+    { id: 'reep', label: 'REEP', icon: <Globe size={14} />, color: 'emerald' as const },
   ];
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
@@ -431,7 +516,7 @@ export default function Hero() {
               onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-xs font-mono tracking-widest transition-all ${
                 activeTab === tab.id 
-                  ? `bg-${tab.color}-500/20 text-${tab.color}-300 border border-${tab.color}-500/40 shadow-[0_0_15px_rgba(0,255,255,0.1)]` 
+                  ? `${TAB_COLORS[tab.color].bg} ${TAB_COLORS[tab.color].text} ${TAB_COLORS[tab.color].border} ${TAB_COLORS[tab.color].shadow}` 
                   : 'text-gray-500 hover:text-gray-300 hover:bg-white/5'
               }`}
             >
