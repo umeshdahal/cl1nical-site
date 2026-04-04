@@ -1,10 +1,9 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { supabase } from '../lib/supabase';
-import { User, Mail, Save, ArrowLeft } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 
-// SERVER CHECK: Basic check
-const { data: { session } } = await supabase.auth.getSession();
+// TODO: Replace with your new backend API call to fetch user profile
+// Since this is a static build, session checks should be handled client-side or via an API route.
 ---
 
 <Layout title="Profile | cl1nical">
@@ -21,27 +20,40 @@ const { data: { session } } = await supabase.auth.getSession();
                     <label class="block text-[10px] text-gray-500 uppercase tracking-widest mb-2">Email</label>
                     <p id="user-email" class="text-xl font-mono text-purple-400">Loading...</p>
                 </div>
-                <button onclick="supabase.auth.signOut().then(() => location.href='/')" class="px-6 py-2 border border-red-500/30 text-red-500 text-xs rounded-lg hover:bg-red-500 hover:text-white transition-all">
+                <button id="logout-btn" class="px-6 py-2 border border-red-500/30 text-red-500 text-xs rounded-lg hover:bg-red-500 hover:text-white transition-all">
                     LOGOUT_SESSION
                 </button>
             </div>
         </div>
     </div>
+    <div id="loading-state" class="text-center py-20">
+        <p class="font-mono text-gray-500 animate-pulse">VERIFYING SESSION...</p>
+    </div>
   </main>
 </Layout>
 
 <script>
-  import { supabase } from '../lib/supabase';
-
+  // TODO: Integrate your new Auth API here
   async function checkAuth() {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    // Placeholder: Simulate auth check
+    // Replace this with a fetch to your auth endpoint or token validation
+    const isAuthenticated = false; // Set to true temporarily to preview the UI
+    
+    if (!isAuthenticated) {
+      // Redirect to login if not authenticated
       window.location.href = '/login';
     } else {
       document.getElementById('auth-gate').classList.remove('hidden');
-      document.getElementById('user-email').innerText = session.user.email;
+      document.getElementById('loading-state').classList.add('hidden');
+      document.getElementById('user-email').innerText = 'user@example.com'; // Replace with actual email from API
     }
   }
+
+  document.getElementById('logout-btn')?.addEventListener('click', () => {
+    // TODO: Call your new Auth API sign-out endpoint
+    console.log('Logging out...');
+    window.location.href = '/';
+  });
 
   checkAuth();
   document.addEventListener('astro:page-load', checkAuth);
