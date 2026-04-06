@@ -1,5 +1,4 @@
 ---
-import { ClientRouter } from 'astro:transitions';
 import '../styles/global.css';
 
 interface Props {
@@ -10,49 +9,14 @@ const { title } = Astro.props;
 ---
 
 <!doctype html>
-<html lang="en" class="bg-[#030303] scroll-smooth">
+<html lang="en" class="scroll-smooth">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<title>{title}</title>
-		<ClientRouter />
 	</head>
-	<body class="antialiased text-white selection:bg-purple-500/30 selection:text-purple-200 min-h-screen relative overflow-x-hidden">
-
-		
-		<div 
-			id="cursor-glow" 
-			transition:persist
-			class="pointer-events-none fixed inset-0 z-[9999] transition-opacity duration-300 opacity-0"
-		></div>
-
-		<div class="relative z-10">
-			<slot />
-		</div>
-
-		<script is:inline>
-			// Optimized global handler
-			const moveGlow = (e) => {
-				const glow = document.getElementById('cursor-glow');
-				if (!glow) return;
-				
-				if (glow.style.opacity !== '1') glow.style.opacity = '1';
-				
-				glow.style.setProperty('--x', `${e.clientX}px`);
-				glow.style.setProperty('--y', `${e.clientY}px`);
-			};
-
-			// Persistent listener attachment
-			function attachGlow() {
-				window.removeEventListener('mousemove', moveGlow);
-				window.addEventListener('mousemove', moveGlow);
-			}
-
-			// Initialize on every Astro event
-			attachGlow();
-			document.addEventListener('astro:page-load', attachGlow);
-			document.addEventListener('astro:after-swap', attachGlow);
-		</script>
+	<body class="antialiased bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-white min-h-screen">
+		<slot />
 	</body>
 </html>
