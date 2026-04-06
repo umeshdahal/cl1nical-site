@@ -101,12 +101,6 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             </button>
           </div>
 
-          {!isRegister && (
-            <div className="mt-4 p-3 bg-white/[0.04] rounded-lg text-xs text-white/40 border border-white/[0.06]">
-              <p className="font-medium mb-1 text-white/60">Demo Credentials:</p>
-              <p>Username: <code className="bg-white/[0.06] px-1.5 py-0.5 rounded text-white/60">admin</code> Password: <code className="bg-white/[0.06] px-1.5 py-0.5 rounded text-white/60">admin123</code></p>
-            </div>
-          )}
         </div>
       </div>
     </div>

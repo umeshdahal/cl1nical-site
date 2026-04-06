@@ -9,7 +9,11 @@ interface Note {
   updatedAt: string;
 }
 
-export default function Notes() {
+interface NotesProps {
+  darkMode: boolean;
+}
+
+export default function Notes({ darkMode }: NotesProps) {
   const [notes, setNotes] = useState<Note[]>(() => {
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('app_notes');
@@ -64,17 +68,21 @@ export default function Notes() {
   return (
     <div className="h-full flex flex-col md:flex-row gap-4">
       {/* Sidebar */}
-      <div className="w-full md:w-56 border-b md:border-b-0 md:border-r border-white/[0.08] p-3 flex flex-col">
+      <div className={`w-full md:w-56 border-b md:border-b-0 md:border-r p-3 flex flex-col ${darkMode ? 'border-white/[0.08]' : 'border-gray-200'}`}>
         <button
           onClick={createNote}
-          className="w-full flex items-center justify-center gap-2 py-2 bg-white/[0.08] hover:bg-white/[0.12] text-white rounded-lg font-medium text-sm transition-all mb-3 border border-white/[0.06]"
+          className={`w-full flex items-center justify-center gap-2 py-2 rounded-lg font-medium text-sm transition-all mb-3 border ${
+            darkMode 
+              ? 'bg-white/[0.08] hover:bg-white/[0.12] text-white border-white/[0.06]' 
+              : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-100'
+          }`}
         >
           <Plus size={14} /> New Note
         </button>
         
         <div className="flex-1 overflow-y-auto space-y-1 max-h-48 md:max-h-none">
           {notes.length === 0 && (
-            <p className="text-sm text-white/30 text-center py-6">No notes yet</p>
+            <p className={`text-sm text-center py-6 ${darkMode ? 'text-white/30' : 'text-gray-400'}`}>No notes yet</p>
           )}
           {notes.map(note => (
             <div
@@ -82,22 +90,22 @@ export default function Notes() {
               onClick={() => { setActiveNote(note); setIsEditing(false); }}
               className={`p-2.5 rounded-lg cursor-pointer transition-all ${
                 activeNote?.id === note.id 
-                  ? 'bg-white/[0.08] border border-white/[0.12]' 
-                  : 'hover:bg-white/[0.04] border border-transparent'
+                  ? darkMode ? 'bg-white/[0.08] border border-white/[0.12]' : 'bg-indigo-50 border border-indigo-200'
+                  : darkMode ? 'hover:bg-white/[0.04] border border-transparent' : 'hover:bg-gray-50 border border-transparent'
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-white truncate">
+                <span className={`text-sm font-medium truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                   {note.title}
                 </span>
                 <button
                   onClick={(e) => { e.stopPropagation(); deleteNote(note.id); }}
-                  className="text-white/30 hover:text-red-400 transition-colors ml-2"
+                  className={`${darkMode ? 'text-white/30 hover:text-red-400' : 'text-gray-400 hover:text-red-500'} transition-colors ml-2`}
                 >
                   <Trash2 size={12} />
                 </button>
               </div>
-              <p className="text-[10px] text-white/30 mt-1">
+              <p className={`text-[10px] mt-1 ${darkMode ? 'text-white/30' : 'text-gray-400'}`}>
                 {new Date(note.updatedAt).toLocaleDateString()}
               </p>
             </div>
@@ -108,7 +116,7 @@ export default function Notes() {
       {/* Content */}
       <div className="flex-1 min-h-[300px] md:min-h-[400px]">
         {!activeNote ? (
-          <div className="h-full flex items-center justify-center text-white/30">
+          <div className={`h-full flex items-center justify-center ${darkMode ? 'text-white/30' : 'text-gray-400'}`}>
             <div className="text-center">
               <FileText size={40} className="mx-auto mb-3 opacity-40" />
               <p className="text-sm">Select a note or create a new one</p>
@@ -121,12 +129,20 @@ export default function Notes() {
                 type="text"
                 value={activeNote.title}
                 onChange={e => updateNote(activeNote.id, { title: e.target.value })}
-                className="text-xl font-semibold bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 outline-none focus:border-white/[0.2] text-white w-full"
+                className={`text-xl font-semibold border rounded-lg px-3 py-2 outline-none w-full ${
+                  darkMode 
+                    ? 'bg-white/[0.04] border-white/[0.08] focus:border-white/[0.2] text-white' 
+                    : 'bg-gray-50 border-gray-200 focus:border-indigo-300 text-gray-900'
+                }`}
                 placeholder="Note title"
               />
               <button
                 onClick={() => setIsEditing(false)}
-                className="flex items-center gap-2 px-3 py-2 bg-white/[0.08] hover:bg-white/[0.12] text-white rounded-lg text-sm transition-all border border-white/[0.06]"
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all border ${
+                  darkMode 
+                    ? 'bg-white/[0.08] hover:bg-white/[0.12] text-white border-white/[0.06]'
+                    : 'bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border-indigo-100'
+                }`}
               >
                 <Save size={14} /> Save
               </button>
@@ -134,24 +150,32 @@ export default function Notes() {
             <textarea
               value={activeNote.content}
               onChange={e => updateNote(activeNote.id, { content: e.target.value })}
-              className="w-full h-72 bg-white/[0.02] border border-white/[0.08] rounded-lg p-3 outline-none focus:border-white/[0.2] text-white/80 resize-none text-sm leading-relaxed"
+              className={`w-full h-72 border rounded-lg p-3 outline-none resize-none text-sm leading-relaxed ${
+                darkMode 
+                  ? 'bg-white/[0.02] border-white/[0.08] focus:border-white/[0.2] text-white/80'
+                  : 'bg-gray-50 border-gray-200 focus:border-indigo-300 text-gray-700'
+              }`}
               placeholder="Start typing..."
             />
           </div>
         ) : (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white">{activeNote.title}</h2>
+              <h2 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{activeNote.title}</h2>
               <button
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-2 px-3 py-1.5 bg-white/[0.06] hover:bg-white/[0.1] text-white/70 rounded-lg text-sm transition-all border border-white/[0.06]"
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm transition-all border ${
+                  darkMode 
+                    ? 'bg-white/[0.06] hover:bg-white/[0.1] text-white/70 border-white/[0.06]'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-200'
+                }`}
               >
                 <Edit2 size={14} /> Edit
               </button>
             </div>
-            <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-4">
-              <p className="text-white/70 whitespace-pre-wrap leading-relaxed text-sm">
-                {activeNote.content || <span className="text-white/30 italic">No content yet</span>}
+            <div className={`border rounded-lg p-4 ${darkMode ? 'bg-white/[0.02] border-white/[0.06]' : 'bg-gray-50 border-gray-200'}`}>
+              <p className={`whitespace-pre-wrap leading-relaxed text-sm ${darkMode ? 'text-white/70' : 'text-gray-700'}`}>
+                {activeNote.content || <span className={darkMode ? 'text-white/30 italic' : 'text-gray-400 italic'}>No content yet</span>}
               </p>
             </div>
           </div>
