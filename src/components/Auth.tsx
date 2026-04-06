@@ -38,6 +38,7 @@ export default function AuthUI() {
     }
   };
 
+  // @ts-ignore
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
