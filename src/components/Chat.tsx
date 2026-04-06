@@ -34,11 +34,11 @@ interface Contact {
 
 const mockContacts: Contact[] = [
   { id: 'ai', name: 'AI Assistant', avatar: 'AI', status: 'online', lastMessage: 'How can I help you?', isAI: true },
-  { id: '1', name: 'Alice Chen', avatar: 'AC', status: 'online', lastMessage: 'Hey, check out this file!', unread: 2 },
-  { id: '2', name: 'Bob Smith', avatar: 'BS', status: 'away', lastMessage: 'Thanks for the help!' },
-  { id: '3', name: 'Carol Davis', avatar: 'CD', status: 'online', lastMessage: 'Meeting at 3pm?', unread: 1 },
-  { id: '4', name: 'Dev Team', avatar: 'DT', status: 'online', lastMessage: 'Deploy complete', unread: 5 },
-  { id: '5', name: 'Eve Wilson', avatar: 'EW', status: 'offline', lastMessage: 'See you tomorrow' },
+  { id: '1', name: 'Alice Chen', avatar: 'AC', status: 'online', lastMessage: 'Hey, check out this file!', unread: 2, isAI: true },
+  { id: '2', name: 'Bob Smith', avatar: 'BS', status: 'away', lastMessage: 'Thanks for the help!', isAI: true },
+  { id: '3', name: 'Carol Davis', avatar: 'CD', status: 'online', lastMessage: 'Meeting at 3pm?', unread: 1, isAI: true },
+  { id: '4', name: 'Dev Team', avatar: 'DT', status: 'online', lastMessage: 'Deploy complete', unread: 5, isAI: true },
+  { id: '5', name: 'Eve Wilson', avatar: 'EW', status: 'offline', lastMessage: 'See you tomorrow', isAI: true },
 ];
 
 const initialMessages: Record<string, Message[]> = {
@@ -94,17 +94,76 @@ export default function Chat({ darkMode }: ChatProps) {
     }
   }, [selectedContact]);
 
-  const getAIResponse = async (userMessage: string): Promise<string> => {
+  // Contact personalities for AI responses
+  const contactPersonalities: Record<string, { systemPrompt: string; fallbackResponses: string[] }> = {
+    'ai': {
+      systemPrompt: 'You are a helpful AI assistant integrated into cl1nical, a productivity dashboard. Be concise, friendly, and helpful. You can help with coding, productivity tips, and general questions.',
+      fallbackResponses: [
+        "That's a great question! Let me think about the best approach...",
+        "I'd be happy to help! Here's what I suggest...",
+        "Interesting topic! Based on my knowledge, here's what I can share...",
+        "Let me break that down for you in a clear way...",
+        "Great question! Here's my take on it...",
+      ],
+    },
+    '1': {
+      systemPrompt: 'You are Alice Chen, a friendly designer working on the project. You\'re enthusiastic about design, share files often, and use casual language with emojis. You\'re helpful and positive.',
+      fallbackResponses: [
+        "Oh that sounds awesome! 🎨 Let me think about how we can make that work...",
+        "Hey! I was just working on something similar. Here's what I think... ✨",
+        "Love that idea! Let me share my thoughts on it... 💡",
+        "That's so cool! I have some design mockups that might help with this...",
+        "Ooh interesting! Let me check my files and get back to you! 📁",
+      ],
+    },
+    '2': {
+      systemPrompt: 'You are Bob Smith, a backend developer who\'s always busy but helpful. You\'re technical, direct, and often share code snippets. You appreciate efficiency.',
+      fallbackResponses: [
+        "Sure, I can help with that. Let me check the API docs...",
+        "Good question. From a backend perspective, here's what I'd suggest...",
+        "I've dealt with this before. Here's the approach I'd take...",
+        "Let me think... Yeah, we can definitely make that work with our current setup.",
+        "That's doable. Let me sketch out a quick solution for you.",
+      ],
+    },
+    '3': {
+      systemPrompt: 'You are Carol Davis, a project manager who\'s organized and detail-oriented. You focus on timelines, meetings, and keeping everyone on track. Professional but friendly.',
+      fallbackResponses: [
+        "Let me check the schedule and get back to you on that...",
+        "Good point! I'll add that to our agenda for the next meeting.",
+        "I think we can fit that into the current sprint. Let me review the timeline.",
+        "That's a great idea! Let me coordinate with the team on this.",
+        "I'll make sure everyone is aligned on this. Thanks for bringing it up!",
+      ],
+    },
+    '4': {
+      systemPrompt: 'You are the Dev Team channel, representing the collective voice of the development team. You\'re technical, collaborative, and focused on shipping quality code.',
+      fallbackResponses: [
+        "The team has been discussing this. Here's our consensus...",
+        "We've pushed some updates that should help with this issue.",
+        "Great suggestion! The team is on board. Let's plan the implementation.",
+        "We've reviewed this and here's our technical assessment...",
+        "The CI/CD pipeline is ready for this. Let's get it deployed!",
+      ],
+    },
+    '5': {
+      systemPrompt: 'You are Eve Wilson, a thoughtful developer who\'s currently offline but responds when she can. You\'re reflective, detailed in your responses, and often share insights from experience.',
+      fallbackResponses: [
+        "I was just thinking about this earlier! Here's what I found...",
+        "That reminds me of something I worked on last week. Here's what I learned...",
+        "Interesting perspective! When I have more time, I'd love to dive deeper into this.",
+        "I've been researching this topic. Here are my thoughts so far...",
+        "That's a topic I'm passionate about! Let me share what I know...",
+      ],
+    },
+  };
+
+  const getAIResponse = async (userMessage: string, contactId: string): Promise<string> => {
+    const personality = contactPersonalities[contactId] || contactPersonalities['ai'];
+
     if (!OPENROUTER_API_KEY) {
       // Fallback responses when no API key is set
-      const responses = [
-        "That's an interesting question! Let me think about it...",
-        "I'd be happy to help with that. Could you provide more details?",
-        "Great question! Here's what I know about that topic...",
-        "I understand what you're asking. Let me break it down for you.",
-        "That's a complex topic. Here's my take on it...",
-      ];
-      return responses[Math.floor(Math.random() * responses.length)];
+      return personality.fallbackResponses[Math.floor(Math.random() * personality.fallbackResponses.length)];
     }
 
     try {
@@ -119,7 +178,7 @@ export default function Chat({ darkMode }: ChatProps) {
         body: JSON.stringify({
           model: AI_MODELS[Math.floor(Math.random() * AI_MODELS.length)],
           messages: [
-            { role: 'system', content: 'You are a helpful AI assistant integrated into cl1nical, a productivity dashboard. Be concise, friendly, and helpful. You can help with coding, productivity tips, and general questions.' },
+            { role: 'system', content: personality.systemPrompt },
             { role: 'user', content: userMessage },
           ],
           max_tokens: 500,
@@ -132,7 +191,7 @@ export default function Chat({ darkMode }: ChatProps) {
       return data.choices[0]?.message?.content || "I'm sorry, I couldn't process that request.";
     } catch (error) {
       console.error('AI response error:', error);
-      return "I'm having trouble connecting right now. Please try again later.";
+      return personality.fallbackResponses[Math.floor(Math.random() * personality.fallbackResponses.length)];
     }
   };
 
@@ -165,7 +224,7 @@ export default function Chat({ darkMode }: ChatProps) {
     const contact = contacts.find(c => c.id === selectedContact);
     if (contact?.isAI) {
       setIsTyping(true);
-      const aiResponse = await getAIResponse(newMessage);
+      const aiResponse = await getAIResponse(newMessage, selectedContact);
       setIsTyping(false);
 
       const aiMessage: Message = {
