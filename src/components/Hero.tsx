@@ -15,13 +15,16 @@ import HashGenerator from './HashGenerator';
 import ColorConverter from './ColorConverter';
 import DiffChecker from './DiffChecker';
 import QRCodeGenerator from './QRCodeGenerator';
+import ProfileSettings from './ProfileSettings';
+import Chat from './Chat';
 import {
   FileText, CheckSquare, Bookmark, Shield, Timer, FileType,
   Sun, Moon, LogOut, User, Menu, X, Sparkles, Zap,
-  Code, Clock, Key, Hash, Palette, GitCompare, QrCode
+  Code, Clock, Key, Hash, Palette, GitCompare, QrCode,
+  Settings, MessageCircle
 } from 'lucide-react';
 
-type ModuleType = 'notes' | 'tasks' | 'bookmarks' | 'password' | 'pomodoro' | 'texttools' | 'markdown' | 'regex' | 'timestamp' | 'jwt' | 'hash' | 'color' | 'diff' | 'qrcode';
+type ModuleType = 'notes' | 'tasks' | 'bookmarks' | 'password' | 'pomodoro' | 'texttools' | 'markdown' | 'regex' | 'timestamp' | 'jwt' | 'hash' | 'color' | 'diff' | 'qrcode' | 'profile' | 'chat';
 
 const modules: { id: ModuleType; label: string; icon: React.ReactNode; description: string }[] = [
   { id: 'notes', label: 'Notes', icon: <FileText size={18} />, description: 'Quick notes & ideas' },
@@ -38,6 +41,8 @@ const modules: { id: ModuleType; label: string; icon: React.ReactNode; descripti
   { id: 'color', label: 'Color', icon: <Palette size={18} />, description: 'Convert color formats' },
   { id: 'diff', label: 'Diff', icon: <GitCompare size={18} />, description: 'Compare text differences' },
   { id: 'qrcode', label: 'QR Code', icon: <QrCode size={18} />, description: 'Generate QR codes' },
+  { id: 'chat', label: 'Chat', icon: <MessageCircle size={18} />, description: 'Messages & file sharing' },
+  { id: 'profile', label: 'Settings', icon: <Settings size={18} />, description: 'Profile & preferences' },
 ];
 
 export default function Hero() {
@@ -169,10 +174,10 @@ export default function Hero() {
 
         <div className="flex min-h-[calc(100vh-57px)]">
           {/* Sidebar */}
-          <aside className={`fixed md:sticky top-[57px] left-0 h-[calc(100vh-57px)] w-[260px] overflow-y-auto transition-transform z-40 ${
+          <aside className={`fixed md:sticky top-[57px] left-0 h-[calc(100vh-57px)] w-[260px] overflow-y-auto transition-transform z-40 flex flex-col ${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
           } ${darkMode ? 'bg-[#0a0a0a]/95 md:bg-transparent border-r border-white/[0.08]' : 'bg-white/95 md:bg-gray-50 border-r border-gray-200'}`}>
-            <div className="p-4 space-y-1.5">
+            <div className="flex-1 p-4 space-y-1.5">
               <p className={`text-[10px] font-semibold tracking-widest uppercase px-3 mb-3 ${darkMode ? 'text-white/30' : 'text-gray-400'}`}>Tools</p>
               {modules.map(mod => (
                 <button
@@ -184,16 +189,16 @@ export default function Hero() {
                       : darkMode ? 'text-white/50 hover:text-white/80 hover:bg-white/[0.04]' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                   }`}
                 >
-                  <span className={activeModule === mod.id 
-                    ? darkMode ? 'text-white' : 'text-indigo-600' 
+                  <span className={activeModule === mod.id
+                    ? darkMode ? 'text-white' : 'text-indigo-600'
                     : darkMode ? 'text-white/40' : 'text-gray-400'
                   }>
                     {mod.icon}
                   </span>
                   <div className="text-left flex-1">
                     <p className={`text-sm font-medium ${
-                      activeModule === mod.id 
-                        ? darkMode ? 'text-white' : 'text-indigo-700' 
+                      activeModule === mod.id
+                        ? darkMode ? 'text-white' : 'text-indigo-700'
                         : darkMode ? 'text-white/60' : 'text-gray-600'
                     }`}>
                       {mod.label}
@@ -207,8 +212,8 @@ export default function Hero() {
               ))}
             </div>
 
-            {/* Sidebar footer */}
-            <div className={`absolute bottom-0 left-0 right-0 p-4 ${darkMode ? 'border-t border-white/[0.08] bg-[#0a0a0a]/95' : 'border-t border-gray-200 bg-white/95'}`}>
+            {/* Sidebar footer - now sticky at bottom, scrolls with content */}
+            <div className={`sticky bottom-0 left-0 right-0 p-4 ${darkMode ? 'border-t border-white/[0.08] bg-[#0a0a0a]/95' : 'border-t border-gray-200 bg-white/95'}`}>
               <div className={`flex items-center gap-2 ${darkMode ? 'text-white/30' : 'text-gray-400'}`}>
                 <Zap size={14} />
                 <span className="text-[10px] font-medium tracking-wide">Powered by cl1nical</span>
@@ -261,6 +266,8 @@ export default function Hero() {
               {activeModule === 'color' && <ColorConverter darkMode={darkMode} />}
               {activeModule === 'diff' && <DiffChecker darkMode={darkMode} />}
               {activeModule === 'qrcode' && <QRCodeGenerator darkMode={darkMode} />}
+              {activeModule === 'chat' && <Chat darkMode={darkMode} />}
+              {activeModule === 'profile' && <ProfileSettings darkMode={darkMode} />}
             </div>
           </main>
         </div>
