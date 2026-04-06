@@ -7,12 +7,21 @@ import Bookmarks from './Bookmarks';
 import PasswordGenerator from './PasswordGenerator';
 import Pomodoro from './Pomodoro';
 import TextTools from './TextTools';
-import { 
-  FileText, CheckSquare, Bookmark, Shield, Timer, FileType, 
-  Sun, Moon, LogOut, User, Menu, X, Sparkles, Zap 
+import MarkdownEditor from './MarkdownEditor';
+import RegexTester from './RegexTester';
+import TimestampConverter from './TimestampConverter';
+import JWTDecoder from './JWTDecoder';
+import HashGenerator from './HashGenerator';
+import ColorConverter from './ColorConverter';
+import DiffChecker from './DiffChecker';
+import QRCodeGenerator from './QRCodeGenerator';
+import {
+  FileText, CheckSquare, Bookmark, Shield, Timer, FileType,
+  Sun, Moon, LogOut, User, Menu, X, Sparkles, Zap,
+  Code, Clock, Key, Hash, Palette, GitCompare, QrCode
 } from 'lucide-react';
 
-type ModuleType = 'notes' | 'tasks' | 'bookmarks' | 'password' | 'pomodoro' | 'texttools';
+type ModuleType = 'notes' | 'tasks' | 'bookmarks' | 'password' | 'pomodoro' | 'texttools' | 'markdown' | 'regex' | 'timestamp' | 'jwt' | 'hash' | 'color' | 'diff' | 'qrcode';
 
 const modules: { id: ModuleType; label: string; icon: React.ReactNode; description: string }[] = [
   { id: 'notes', label: 'Notes', icon: <FileText size={18} />, description: 'Quick notes & ideas' },
@@ -21,6 +30,14 @@ const modules: { id: ModuleType; label: string; icon: React.ReactNode; descripti
   { id: 'password', label: 'Password', icon: <Shield size={18} />, description: 'Generate secure passwords' },
   { id: 'pomodoro', label: 'Focus', icon: <Timer size={18} />, description: 'Pomodoro timer' },
   { id: 'texttools', label: 'Text Tools', icon: <FileType size={18} />, description: 'JSON, Base64, URL encode' },
+  { id: 'markdown', label: 'Markdown', icon: <Code size={18} />, description: 'Live markdown editor' },
+  { id: 'regex', label: 'Regex', icon: <Code size={18} />, description: 'Test regular expressions' },
+  { id: 'timestamp', label: 'Timestamp', icon: <Clock size={18} />, description: 'Unix timestamp converter' },
+  { id: 'jwt', label: 'JWT', icon: <Key size={18} />, description: 'Decode JWT tokens' },
+  { id: 'hash', label: 'Hash', icon: <Hash size={18} />, description: 'Generate SHA hashes' },
+  { id: 'color', label: 'Color', icon: <Palette size={18} />, description: 'Convert color formats' },
+  { id: 'diff', label: 'Diff', icon: <GitCompare size={18} />, description: 'Compare text differences' },
+  { id: 'qrcode', label: 'QR Code', icon: <QrCode size={18} />, description: 'Generate QR codes' },
 ];
 
 export default function Hero() {
@@ -233,9 +250,17 @@ export default function Hero() {
               {activeModule === 'notes' && <Notes darkMode={darkMode} />}
               {activeModule === 'tasks' && <Tasks darkMode={darkMode} />}
               {activeModule === 'bookmarks' && <Bookmarks darkMode={darkMode} />}
-              {activeModule === 'password' && <PasswordGenerator darkMode={darkMode} />}
-              {activeModule === 'pomodoro' && <Pomodoro darkMode={darkMode} />}
+              {activeModule === 'password' && <PasswordGenerator />}
+              {activeModule === 'pomodoro' && <Pomodoro />}
               {activeModule === 'texttools' && <TextTools darkMode={darkMode} />}
+              {activeModule === 'markdown' && <MarkdownEditor darkMode={darkMode} />}
+              {activeModule === 'regex' && <RegexTester darkMode={darkMode} />}
+              {activeModule === 'timestamp' && <TimestampConverter darkMode={darkMode} />}
+              {activeModule === 'jwt' && <JWTDecoder darkMode={darkMode} />}
+              {activeModule === 'hash' && <HashGenerator darkMode={darkMode} />}
+              {activeModule === 'color' && <ColorConverter darkMode={darkMode} />}
+              {activeModule === 'diff' && <DiffChecker darkMode={darkMode} />}
+              {activeModule === 'qrcode' && <QRCodeGenerator darkMode={darkMode} />}
             </div>
           </main>
         </div>
