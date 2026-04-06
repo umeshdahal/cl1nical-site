@@ -18,6 +18,7 @@ const DEFAULT_ADMIN = {
 };
 
 export function getUsers(): Record<string, { password: string; user: Omit<User, 'username'> }> {
+  if (typeof window === 'undefined') return {};
   const stored = localStorage.getItem('app_users');
   if (stored) return JSON.parse(stored);
   
@@ -28,7 +29,7 @@ export function getUsers(): Record<string, { password: string; user: Omit<User, 
       user: { role: 'admin', createdAt: new Date().toISOString() },
     },
   };
-  localStorage.setItem('app_users', JSON.stringify(defaultUsers));
+  if (typeof window !== 'undefined') localStorage.setItem('app_users', JSON.stringify(defaultUsers));
   return defaultUsers;
 }
 
@@ -50,7 +51,7 @@ export function login(username: string, password: string): AuthResult {
     createdAt: user.user.createdAt,
   };
   
-  localStorage.setItem('app_session', JSON.stringify(session));
+  if (typeof window !== 'undefined') localStorage.setItem('app_session', JSON.stringify(session));
   return { success: true, user: session };
 }
 
@@ -70,19 +71,20 @@ export function register(username: string, password: string, role: 'admin' | 'us
     user: { role, createdAt: new Date().toISOString() },
   };
   
-  localStorage.setItem('app_users', JSON.stringify(users));
+  if (typeof window !== 'undefined') localStorage.setItem('app_users', JSON.stringify(users));
   
   const session: User = { username, role, createdAt: new Date().toISOString() };
-  localStorage.setItem('app_session', JSON.stringify(session));
+  if (typeof window !== 'undefined') localStorage.setItem('app_session', JSON.stringify(session));
   
   return { success: true, user: session };
 }
 
 export function logout(): void {
-  localStorage.removeItem('app_session');
+  if (typeof window !== 'undefined') localStorage.removeItem('app_session');
 }
 
 export function getCurrentUser(): User | null {
+  if (typeof window === 'undefined') return null;
   const stored = localStorage.getItem('app_session');
   if (stored) return JSON.parse(stored);
   return null;

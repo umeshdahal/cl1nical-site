@@ -25,14 +25,17 @@ const modules: { id: ModuleType; label: string; icon: React.ReactNode; descripti
 
 export default function Hero() {
   const [loggedIn, setLoggedIn] = useState(false);
-  const [darkMode, setDarkMode] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('app_theme');
-      if (stored) return stored === 'dark';
-      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const [darkMode, setDarkMode] = useState(true);
+  
+  // Initialize theme on mount
+  useEffect(() => {
+    const stored = localStorage.getItem('app_theme');
+    if (stored) {
+      setDarkMode(stored === 'dark');
+    } else {
+      setDarkMode(window.matchMedia('(prefers-color-scheme: dark)').matches);
     }
-    return true;
-  });
+  }, []);
   const [activeModule, setActiveModule] = useState<ModuleType>('notes');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
