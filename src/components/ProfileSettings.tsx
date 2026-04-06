@@ -3,6 +3,7 @@ import { Save, User, Palette, Bell, Shield, Globe, Check, X } from 'lucide-react
 
 interface ProfileSettingsProps {
   darkMode: boolean;
+  onProfileUpdate?: (name: string) => void;
 }
 
 interface UserProfile {
@@ -27,7 +28,7 @@ interface Preferences {
   timezone: string;
 }
 
-export default function ProfileSettings({ darkMode }: ProfileSettingsProps) {
+export default function ProfileSettings({ darkMode, onProfileUpdate }: ProfileSettingsProps) {
   const [activeTab, setActiveTab] = useState<'profile' | 'appearance' | 'notifications' | 'privacy'>('profile');
   const [saved, setSaved] = useState(false);
 
@@ -79,6 +80,26 @@ export default function ProfileSettings({ darkMode }: ProfileSettingsProps) {
   const saveProfile = () => {
     localStorage.setItem('app_profile', JSON.stringify(profile));
     localStorage.setItem('app_preferences', JSON.stringify(preferences));
+    
+    // Apply theme changes immediately
+    if (preferences.theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else if (preferences.theme === 'light') {
+      document.documentElement.classList.remove('dark');
+    } else {
+      // System preference
+      if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    }
+    
+    // Notify parent of profile update
+    if (onProfileUpdate) {
+      onProfileUpdate(profile.displayName);
+    }
+    
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };

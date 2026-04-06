@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { isAuthenticated, getCurrentUser, logout } from '../lib/auth';
 import Login from './Login';
 import Notes from './Notes';
@@ -17,14 +17,15 @@ import DiffChecker from './DiffChecker';
 import QRCodeGenerator from './QRCodeGenerator';
 import ProfileSettings from './ProfileSettings';
 import Chat from './Chat';
+import HomeLanding from './HomeLanding';
 import {
   FileText, CheckSquare, Bookmark, Shield, Timer, FileType,
-  Sun, Moon, LogOut, User, Menu, X, Sparkles, Zap,
+  Sun, Moon, LogOut, User, Menu, X, Zap,
   Code, Clock, Key, Hash, Palette, GitCompare, QrCode,
-  Settings, MessageCircle
+  MessageCircle, Settings, ChevronDown, Home
 } from 'lucide-react';
 
-type ModuleType = 'notes' | 'tasks' | 'bookmarks' | 'password' | 'pomodoro' | 'texttools' | 'markdown' | 'regex' | 'timestamp' | 'jwt' | 'hash' | 'color' | 'diff' | 'qrcode' | 'profile' | 'chat';
+type ModuleType = 'home' | 'notes' | 'tasks' | 'bookmarks' | 'password' | 'pomodoro' | 'texttools' | 'markdown' | 'regex' | 'timestamp' | 'jwt' | 'hash' | 'color' | 'diff' | 'qrcode' | 'chat' | 'profile';
 
 const modules: { id: ModuleType; label: string; icon: React.ReactNode; description: string }[] = [
   { id: 'notes', label: 'Notes', icon: <FileText size={18} />, description: 'Quick notes & ideas' },
@@ -41,29 +42,41 @@ const modules: { id: ModuleType; label: string; icon: React.ReactNode; descripti
   { id: 'color', label: 'Color', icon: <Palette size={18} />, description: 'Convert color formats' },
   { id: 'diff', label: 'Diff', icon: <GitCompare size={18} />, description: 'Compare text differences' },
   { id: 'qrcode', label: 'QR Code', icon: <QrCode size={18} />, description: 'Generate QR codes' },
-  { id: 'chat', label: 'Chat', icon: <MessageCircle size={18} />, description: 'Messages & file sharing' },
-  { id: 'profile', label: 'Settings', icon: <Settings size={18} />, description: 'Profile & preferences' },
+  { id: 'chat', label: 'Chat', icon: <MessageCircle size={18} />, description: 'Messages & AI' },
 ];
 
 export default function Hero() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
-  
-  // Initialize theme on mount - default to light mode
-  useEffect(() => {
-    const stored = localStorage.getItem('app_theme');
-    if (stored) {
-      setDarkMode(stored === 'dark');
-    }
-    // If no stored preference, stay with false (light mode default)
-  }, []);
-  
-  const [activeModule, setActiveModule] = useState<ModuleType>('notes');
+  const [activeModule, setActiveModule] = useState<ModuleType>('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [showProfileDropdown, setShowProfileDropdown] = useState(false);
+  const [displayName, setDisplayName] = useState('');
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
+  // Initialize theme and profile on mount
   useEffect(() => {
     setMounted(true);
+    const storedTheme = localStorage.getItem('app_theme');
+    if (storedTheme) setDarkMode(storedTheme === 'dark');
+    
+    const profile = localStorage.getItem('app_profile');
+    if (profile) {
+      const parsed = JSON.parse(profile);
+      setDisplayName(parsed.displayName || '');
+    }
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowProfileDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   useEffect(() => {
@@ -81,18 +94,23 @@ export default function Hero() {
   const handleLogout = () => {
     logout();
     setLoggedIn(false);
-    setActiveModule('notes');
+    setActiveModule('home');
+  };
+
+  const handleProfileUpdate = (name: string) => {
+    setDisplayName(name);
   };
 
   const user = getCurrentUser();
+  const displayUser = displayName || user?.username || 'User';
 
   if (!loggedIn || !mounted) {
     return <Login onLoginSuccess={() => setLoggedIn(true)} />;
   }
 
   return (
-    <div className={`min-h-screen text-white overflow-hidden relative ${darkMode ? 'bg-[#0a0a0a]' : 'bg-gray-50'}`}>
-      {/* Subtle mesh gradient background - pure CSS, no JS */}
+    <div className={`min-h-screen overflow-hidden relative ${darkMode ? 'bg-[#0a0a0a]' : 'bg-gray-50'}`}>
+      {/* Background effects */}
       {darkMode && (
         <div className="fixed inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-purple-500/20 rounded-full blur-[120px]"></div>
@@ -101,7 +119,6 @@ export default function Hero() {
         </div>
       )}
 
-      {/* Subtle grid pattern overlay - only in dark mode */}
       {darkMode && (
         <div className="fixed inset-0 opacity-[0.03]" style={{
           backgroundImage: 'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
@@ -120,26 +137,21 @@ export default function Hero() {
               >
                 {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
               </button>
-              <div className="flex items-center gap-2.5">
+              <button
+                onClick={() => setActiveModule('home')}
+                className="flex items-center gap-2.5"
+              >
                 <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg">
                   <span className="text-white text-sm font-bold tracking-tight">cl1</span>
                 </div>
                 <div className="hidden sm:block">
-                  <h1 className={`text-lg font-semibold tracking-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>Dashboard</h1>
-                  <p className={`text-[10px] font-medium tracking-wide ${darkMode ? 'text-white/40' : 'text-gray-500'}`}>STUDIO v2.0</p>
+                  <h1 className={`text-lg font-semibold tracking-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>cl1nical</h1>
+                  <p className={`text-[10px] font-medium tracking-wide ${darkMode ? 'text-white/40' : 'text-gray-500'}`}>Productivity Suite</p>
                 </div>
-              </div>
+              </button>
             </div>
 
             <div className="flex items-center gap-1">
-              {/* Quick stats pill */}
-              <div className={`hidden md:flex items-center gap-3 px-3 py-1.5 rounded-full mr-2 ${darkMode ? 'bg-white/[0.04] border border-white/[0.06]' : 'bg-gray-100 border border-gray-200'}`}>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className={`text-[10px] font-medium ${darkMode ? 'text-white/50' : 'text-gray-600'}`}>Online</span>
-                </div>
-              </div>
-
               {/* Theme Toggle */}
               <button
                 onClick={() => setDarkMode(!darkMode)}
@@ -152,21 +164,66 @@ export default function Hero() {
                 )}
               </button>
 
-              {/* User Menu */}
-              <div className={`flex items-center gap-2 pl-1 ml-1 ${darkMode ? 'border-l border-white/[0.08]' : 'border-l border-gray-200'}`}>
-                <div className={`flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all ${darkMode ? 'hover:bg-white/10' : 'hover:bg-gray-100'}`}>
+              {/* User Menu with Dropdown */}
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setShowProfileDropdown(!showProfileDropdown)}
+                  className={`flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all ${darkMode ? 'hover:bg-white/10' : 'hover:bg-gray-100'}`}
+                >
                   <div className="w-7 h-7 bg-gradient-to-br from-purple-500 to-indigo-500 rounded-full flex items-center justify-center">
                     <User size={14} className="text-white" />
                   </div>
-                  <span className={`text-sm hidden md:block font-medium ${darkMode ? 'text-white/70' : 'text-gray-700'}`}>{user?.username}</span>
-                </div>
-                <button
-                  onClick={handleLogout}
-                  className={`p-2 rounded-lg transition-all ${darkMode ? 'hover:bg-white/10' : 'hover:bg-gray-100'}`}
-                  title="Logout"
-                >
-                  <LogOut size={16} className={darkMode ? 'text-white/40 hover:text-white/80 transition-colors' : 'text-gray-400 hover:text-gray-700 transition-colors'} />
+                  <span className={`text-sm hidden md:block font-medium ${darkMode ? 'text-white/70' : 'text-gray-700'}`}>{displayUser}</span>
+                  <ChevronDown size={14} className={`transition-transform ${darkMode ? 'text-white/50' : 'text-gray-500'} ${showProfileDropdown ? 'rotate-180' : ''}`} />
                 </button>
+
+                {/* Profile Dropdown */}
+                {showProfileDropdown && (
+                  <div className={`absolute right-0 top-full mt-2 w-56 rounded-xl border shadow-lg overflow-hidden z-50 ${
+                    darkMode ? 'bg-[#1a1a1a] border-white/[0.08]' : 'bg-white border-gray-200'
+                  }`}>
+                    <div className={`p-3 border-b ${darkMode ? 'border-white/[0.08]' : 'border-gray-200'}`}>
+                      <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{displayUser}</p>
+                      <p className={`text-xs ${darkMode ? 'text-white/40' : 'text-gray-500'}`}>{user?.role || 'user'}</p>
+                    </div>
+                    <div className="p-2">
+                      <button
+                        onClick={() => { setActiveModule('home'); setShowProfileDropdown(false); }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
+                          darkMode ? 'hover:bg-white/[0.08] text-white/70' : 'hover:bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        <Home size={16} /> Home
+                      </button>
+                      <button
+                        onClick={() => { setActiveModule('chat'); setShowProfileDropdown(false); }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
+                          darkMode ? 'hover:bg-white/[0.08] text-white/70' : 'hover:bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        <MessageCircle size={16} /> Chat
+                      </button>
+                      <button
+                        onClick={() => { setActiveModule('profile'); setShowProfileDropdown(false); }}
+                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
+                          darkMode ? 'hover:bg-white/[0.08] text-white/70' : 'hover:bg-gray-100 text-gray-700'
+                        }`}
+                      >
+                        <Settings size={16} /> Settings
+                      </button>
+                    </div>
+                    <div className={`p-2 border-t ${darkMode ? 'border-white/[0.08]' : 'border-gray-200'}`}>
+                      <button
+                        onClick={handleLogout}
+                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
+                          darkMode ? 'hover:bg-red-500/10 text-red-400' : 'hover:bg-red-50 text-red-600'
+                        }`}
+                      >
+                        <LogOut size={16} /> Sign Out
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -189,16 +246,16 @@ export default function Hero() {
                       : darkMode ? 'text-white/50 hover:text-white/80 hover:bg-white/[0.04]' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                   }`}
                 >
-                  <span className={activeModule === mod.id
-                    ? darkMode ? 'text-white' : 'text-indigo-600'
+                  <span className={activeModule === mod.id 
+                    ? darkMode ? 'text-white' : 'text-indigo-600' 
                     : darkMode ? 'text-white/40' : 'text-gray-400'
                   }>
                     {mod.icon}
                   </span>
                   <div className="text-left flex-1">
                     <p className={`text-sm font-medium ${
-                      activeModule === mod.id
-                        ? darkMode ? 'text-white' : 'text-indigo-700'
+                      activeModule === mod.id 
+                        ? darkMode ? 'text-white' : 'text-indigo-700' 
                         : darkMode ? 'text-white/60' : 'text-gray-600'
                     }`}>
                       {mod.label}
@@ -212,7 +269,7 @@ export default function Hero() {
               ))}
             </div>
 
-            {/* Sidebar footer - now sticky at bottom, scrolls with content */}
+            {/* Sidebar footer */}
             <div className={`sticky bottom-0 left-0 right-0 p-4 ${darkMode ? 'border-t border-white/[0.08] bg-[#0a0a0a]/95' : 'border-t border-gray-200 bg-white/95'}`}>
               <div className={`flex items-center gap-2 ${darkMode ? 'text-white/30' : 'text-gray-400'}`}>
                 <Zap size={14} />
@@ -231,44 +288,23 @@ export default function Hero() {
 
           {/* Main Content */}
           <main className="flex-1 p-4 md:p-8">
-            {/* Title */}
-            <div className="mb-6 flex items-center gap-3">
-              <div className={`w-10 h-10 flex items-center justify-center ${
-                darkMode ? 'bg-white/[0.06] border border-white/[0.08]' : 'bg-indigo-50 border border-indigo-100'
-              } ${darkMode ? '' : 'text-indigo-600'} rounded-xl`}>
-                {modules.find(m => m.id === activeModule)?.icon}
-              </div>
-              <div>
-                <h2 className={`text-2xl font-bold tracking-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                  {modules.find(m => m.id === activeModule)?.label}
-                </h2>
-                <p className={`text-sm mt-0.5 ${darkMode ? 'text-white/40' : 'text-gray-500'}`}>
-                  {modules.find(m => m.id === activeModule)?.description}
-                </p>
-              </div>
-            </div>
-
-            {/* Module Content */}
-            <div className={`${
-              darkMode ? 'bg-white/[0.03] border border-white/[0.08]' : 'bg-white border border-gray-200 shadow-sm'
-            } rounded-2xl p-5 md:p-6 backdrop-blur-xl`}>
-              {activeModule === 'notes' && <Notes darkMode={darkMode} />}
-              {activeModule === 'tasks' && <Tasks darkMode={darkMode} />}
-              {activeModule === 'bookmarks' && <Bookmarks darkMode={darkMode} />}
-              {activeModule === 'password' && <PasswordGenerator />}
-              {activeModule === 'pomodoro' && <Pomodoro />}
-              {activeModule === 'texttools' && <TextTools darkMode={darkMode} />}
-              {activeModule === 'markdown' && <MarkdownEditor darkMode={darkMode} />}
-              {activeModule === 'regex' && <RegexTester darkMode={darkMode} />}
-              {activeModule === 'timestamp' && <TimestampConverter darkMode={darkMode} />}
-              {activeModule === 'jwt' && <JWTDecoder darkMode={darkMode} />}
-              {activeModule === 'hash' && <HashGenerator darkMode={darkMode} />}
-              {activeModule === 'color' && <ColorConverter darkMode={darkMode} />}
-              {activeModule === 'diff' && <DiffChecker darkMode={darkMode} />}
-              {activeModule === 'qrcode' && <QRCodeGenerator darkMode={darkMode} />}
-              {activeModule === 'chat' && <Chat darkMode={darkMode} />}
-              {activeModule === 'profile' && <ProfileSettings darkMode={darkMode} />}
-            </div>
+            {activeModule === 'home' && <HomeLanding darkMode={darkMode} onNavigate={(mod) => setActiveModule(mod as ModuleType)} />}
+            {activeModule === 'profile' && <ProfileSettings darkMode={darkMode} onProfileUpdate={handleProfileUpdate} />}
+            {activeModule === 'chat' && <Chat darkMode={darkMode} />}
+            {activeModule === 'notes' && <Notes darkMode={darkMode} />}
+            {activeModule === 'tasks' && <Tasks darkMode={darkMode} />}
+            {activeModule === 'bookmarks' && <Bookmarks darkMode={darkMode} />}
+            {activeModule === 'password' && <PasswordGenerator />}
+            {activeModule === 'pomodoro' && <Pomodoro />}
+            {activeModule === 'texttools' && <TextTools darkMode={darkMode} />}
+            {activeModule === 'markdown' && <MarkdownEditor darkMode={darkMode} />}
+            {activeModule === 'regex' && <RegexTester darkMode={darkMode} />}
+            {activeModule === 'timestamp' && <TimestampConverter darkMode={darkMode} />}
+            {activeModule === 'jwt' && <JWTDecoder darkMode={darkMode} />}
+            {activeModule === 'hash' && <HashGenerator darkMode={darkMode} />}
+            {activeModule === 'color' && <ColorConverter darkMode={darkMode} />}
+            {activeModule === 'diff' && <DiffChecker darkMode={darkMode} />}
+            {activeModule === 'qrcode' && <QRCodeGenerator darkMode={darkMode} />}
           </main>
         </div>
       </div>
