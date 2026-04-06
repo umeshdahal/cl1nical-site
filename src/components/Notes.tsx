@@ -11,15 +11,25 @@ interface Note {
 
 export default function Notes() {
   const [notes, setNotes] = useState<Note[]>(() => {
-    const stored = localStorage.getItem('app_notes');
-    return stored ? JSON.parse(stored) : [];
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('app_notes');
+      return stored ? JSON.parse(stored) : [];
+    }
+    return [];
   });
   const [activeNote, setActiveNote] = useState<Note | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    localStorage.setItem('app_notes', JSON.stringify(notes));
-  }, [notes]);
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (mounted && typeof window !== 'undefined') {
+      localStorage.setItem('app_notes', JSON.stringify(notes));
+    }
+  }, [notes, mounted]);
 
   const createNote = () => {
     const newNote: Note = {
@@ -52,42 +62,42 @@ export default function Notes() {
   };
 
   return (
-    <div className="h-full flex">
+    <div className="h-full flex flex-col md:flex-row gap-4">
       {/* Sidebar */}
-      <div className="w-64 border-r border-gray-200 dark:border-gray-700 p-4 flex flex-col">
+      <div className="w-full md:w-56 border-b md:border-b-0 md:border-r border-white/[0.08] p-3 flex flex-col">
         <button
           onClick={createNote}
-          className="w-full flex items-center justify-center gap-2 py-2 bg-black dark:bg-white text-white dark:text-black rounded-lg font-medium text-sm hover:bg-gray-800 dark:hover:bg-gray-200 transition mb-4"
+          className="w-full flex items-center justify-center gap-2 py-2 bg-white/[0.08] hover:bg-white/[0.12] text-white rounded-lg font-medium text-sm transition-all mb-3 border border-white/[0.06]"
         >
-          <Plus size={16} /> New Note
+          <Plus size={14} /> New Note
         </button>
         
-        <div className="flex-1 overflow-y-auto space-y-1">
+        <div className="flex-1 overflow-y-auto space-y-1 max-h-48 md:max-h-none">
           {notes.length === 0 && (
-            <p className="text-sm text-gray-400 dark:text-gray-500 text-center py-8">No notes yet</p>
+            <p className="text-sm text-white/30 text-center py-6">No notes yet</p>
           )}
           {notes.map(note => (
             <div
               key={note.id}
               onClick={() => { setActiveNote(note); setIsEditing(false); }}
-              className={`p-3 rounded-lg cursor-pointer transition ${
+              className={`p-2.5 rounded-lg cursor-pointer transition-all ${
                 activeNote?.id === note.id 
-                  ? 'bg-gray-100 dark:bg-gray-800' 
-                  : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                  ? 'bg-white/[0.08] border border-white/[0.12]' 
+                  : 'hover:bg-white/[0.04] border border-transparent'
               }`}
             >
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                <span className="text-sm font-medium text-white truncate">
                   {note.title}
                 </span>
                 <button
                   onClick={(e) => { e.stopPropagation(); deleteNote(note.id); }}
-                  className="text-gray-400 hover:text-red-500 transition"
+                  className="text-white/30 hover:text-red-400 transition-colors ml-2"
                 >
-                  <Trash2 size={14} />
+                  <Trash2 size={12} />
                 </button>
               </div>
-              <p className="text-xs text-gray-400 mt-1">
+              <p className="text-[10px] text-white/30 mt-1">
                 {new Date(note.updatedAt).toLocaleDateString()}
               </p>
             </div>
@@ -96,27 +106,27 @@ export default function Notes() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 p-6">
+      <div className="flex-1 min-h-[300px] md:min-h-[400px]">
         {!activeNote ? (
-          <div className="h-full flex items-center justify-center text-gray-400">
+          <div className="h-full flex items-center justify-center text-white/30">
             <div className="text-center">
-              <FileText size={48} className="mx-auto mb-4 opacity-50" />
+              <FileText size={40} className="mx-auto mb-3 opacity-40" />
               <p className="text-sm">Select a note or create a new one</p>
             </div>
           </div>
         ) : isEditing ? (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <input
                 type="text"
                 value={activeNote.title}
                 onChange={e => updateNote(activeNote.id, { title: e.target.value })}
-                className="text-xl font-semibold bg-transparent border-none outline-none text-gray-900 dark:text-white w-full"
+                className="text-xl font-semibold bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2 outline-none focus:border-white/[0.2] text-white w-full"
                 placeholder="Note title"
               />
               <button
                 onClick={() => setIsEditing(false)}
-                className="flex items-center gap-2 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black rounded-lg text-sm hover:bg-gray-800 dark:hover:bg-gray-200 transition"
+                className="flex items-center gap-2 px-3 py-2 bg-white/[0.08] hover:bg-white/[0.12] text-white rounded-lg text-sm transition-all border border-white/[0.06]"
               >
                 <Save size={14} /> Save
               </button>
@@ -124,24 +134,24 @@ export default function Notes() {
             <textarea
               value={activeNote.content}
               onChange={e => updateNote(activeNote.id, { content: e.target.value })}
-              className="w-full h-80 bg-transparent border-none outline-none text-gray-700 dark:text-gray-300 resize-none text-sm leading-relaxed"
+              className="w-full h-72 bg-white/[0.02] border border-white/[0.08] rounded-lg p-3 outline-none focus:border-white/[0.2] text-white/80 resize-none text-sm leading-relaxed"
               placeholder="Start typing..."
             />
           </div>
         ) : (
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{activeNote.title}</h2>
+              <h2 className="text-xl font-semibold text-white">{activeNote.title}</h2>
               <button
                 onClick={() => setIsEditing(true)}
-                className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-700 transition"
+                className="flex items-center gap-2 px-3 py-1.5 bg-white/[0.06] hover:bg-white/[0.1] text-white/70 rounded-lg text-sm transition-all border border-white/[0.06]"
               >
                 <Edit2 size={14} /> Edit
               </button>
             </div>
-            <div className="prose dark:prose-invert max-w-none">
-              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed">
-                {activeNote.content || <span className="text-gray-400 italic">No content yet</span>}
+            <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-4">
+              <p className="text-white/70 whitespace-pre-wrap leading-relaxed text-sm">
+                {activeNote.content || <span className="text-white/30 italic">No content yet</span>}
               </p>
             </div>
           </div>

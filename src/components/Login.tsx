@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { login, register, getCurrentUser } from '../lib/auth';
+import { login, register } from '../lib/auth';
 import { Lock, User, Eye, EyeOff, LogIn, UserPlus } from 'lucide-react';
 
 interface LoginProps {
@@ -18,19 +18,11 @@ export default function Login({ onLoginSuccess }: LoginProps) {
     e.preventDefault();
     setError('');
     setLoading(true);
-
     await new Promise(r => setTimeout(r, 500));
-
     try {
-      const result = isRegister 
-        ? register(username, password)
-        : login(username, password);
-
-      if (result.success && result.user) {
-        onLoginSuccess?.();
-      } else {
-        setError(result.error || 'An error occurred');
-      }
+      const result = isRegister ? register(username, password) : login(username, password);
+      if (result.success && result.user) onLoginSuccess?.();
+      else setError(result.error || 'An error occurred');
     } catch {
       setError('An unexpected error occurred');
     } finally {
@@ -39,82 +31,60 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950 p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-gray-800">
-          {/* Header */}
+    <div className="min-h-screen flex items-center justify-center bg-[#0a0a0a] p-4 relative overflow-hidden">
+      {/* Background effects */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-[500px] h-[500px] bg-purple-500/15 rounded-full blur-[120px]"></div>
+        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px]"></div>
+      </div>
+
+      <div className="w-full max-w-md relative z-10">
+        <div className="bg-white/[0.03] rounded-2xl p-8 border border-white/[0.08] backdrop-blur-xl">
           <div className="text-center mb-8">
-            <div className="w-16 h-16 mx-auto mb-4 bg-black dark:bg-white rounded-2xl flex items-center justify-center">
-              <span className="text-white dark:text-black text-2xl font-bold">cl1</span>
+            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-white to-white/80 rounded-2xl flex items-center justify-center shadow-lg shadow-white/10">
+              <span className="text-black text-2xl font-bold">cl1</span>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            <h1 className="text-2xl font-bold text-white">
               {isRegister ? 'Create Account' : 'Welcome Back'}
             </h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
+            <p className="text-white/40 mt-1 text-sm">
               {isRegister ? 'Sign up to get started' : 'Sign in to your dashboard'}
             </p>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
             {error && (
-              <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-600 dark:text-red-400 text-sm">
-                {error}
-              </div>
+              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">{error}</div>
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Username
-              </label>
+              <label className="block text-sm font-medium text-white/60 mb-1.5">Username</label>
               <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                  <User size={18} />
-                </div>
-                <input
-                  type="text"
-                  value={username}
-                  onChange={e => setUsername(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition text-gray-900 dark:text-white"
-                  placeholder="Enter your username"
-                  required
-                />
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30"><User size={18} /></div>
+                <input type="text" value={username} onChange={e => setUsername(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-white/20 focus:border-white/[0.2] outline-none transition text-white placeholder:text-white/30"
+                  placeholder="Enter your username" required />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-                Password
-              </label>
+              <label className="block text-sm font-medium text-white/60 mb-1.5">Password</label>
               <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
-                  <Lock size={18} />
-                </div>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-10 py-2.5 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent outline-none transition text-gray-900 dark:text-white"
-                  placeholder="Enter your password"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                >
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30"><Lock size={18} /></div>
+                <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
+                  className="w-full pl-10 pr-10 py-2.5 bg-white/[0.04] border border-white/[0.08] rounded-lg focus:ring-2 focus:ring-white/20 focus:border-white/[0.2] outline-none transition text-white placeholder:text-white/30"
+                  placeholder="Enter your password" required />
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 transition">
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 bg-black dark:bg-white text-white dark:text-black font-medium rounded-lg hover:bg-gray-800 dark:hover:bg-gray-200 transition disabled:opacity-50 flex items-center justify-center gap-2"
-            >
+            <button type="submit" disabled={loading}
+              className="w-full py-2.5 bg-white/[0.1] hover:bg-white/[0.15] text-white font-medium rounded-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2 border border-white/[0.06]">
               {loading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
               ) : isRegister ? (
                 <><UserPlus size={18} /> Create Account</>
               ) : (
@@ -123,22 +93,18 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             </button>
           </form>
 
-          {/* Toggle */}
           <div className="mt-6 text-center">
-            <button
-              onClick={() => { setIsRegister(!isRegister); setError(''); }}
-              className="text-sm text-gray-500 dark:text-gray-400 hover:text-black dark:hover:text-white transition"
-            >
+            <button onClick={() => { setIsRegister(!isRegister); setError(''); }}
+              className="text-sm text-white/40 hover:text-white/60 transition">
               {isRegister ? 'Already have an account? ' : "Don't have an account? "}
-              <span className="font-medium text-black dark:text-white">{isRegister ? 'Sign In' : 'Sign Up'}</span>
+              <span className="font-medium text-white">{isRegister ? 'Sign In' : 'Sign Up'}</span>
             </button>
           </div>
 
-          {/* Default credentials hint */}
           {!isRegister && (
-            <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-xs text-gray-500 dark:text-gray-400">
-              <p className="font-medium mb-1">Demo Credentials:</p>
-              <p>Username: <code className="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">admin</code> Password: <code className="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">admin123</code></p>
+            <div className="mt-4 p-3 bg-white/[0.04] rounded-lg text-xs text-white/40 border border-white/[0.06]">
+              <p className="font-medium mb-1 text-white/60">Demo Credentials:</p>
+              <p>Username: <code className="bg-white/[0.06] px-1.5 py-0.5 rounded text-white/60">admin</code> Password: <code className="bg-white/[0.06] px-1.5 py-0.5 rounded text-white/60">admin123</code></p>
             </div>
           )}
         </div>

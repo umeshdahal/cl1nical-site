@@ -3,8 +3,8 @@ import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero';
 ---
 
-<Layout title="cl1nical | Home">
+<Layout title="cl1nical | Dashboard">
 	<main>
-		<Hero client:load />
+		<Hero client:only="react" />
 	</main>
 </Layout>
