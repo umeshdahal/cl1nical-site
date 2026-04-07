@@ -1,0 +1,8 @@
+---
+import Layout from '../layouts/Layout.astro';
+import GraphNavPage from '../components/pages/GraphNavPage';
+---
+
+<Layout title="cl1nical — Graph Navigation" showNav={false}>
+  <GraphNavPage client:only="react" />
+</Layout>
