@@ -1,10 +1,16 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Hero from '../components/Hero';
+import Sequence1TitleMachine from '../components/sequences/Sequence1TitleMachine';
+import Sequence2ParticleExplosion from '../components/sequences/Sequence2ParticleExplosion';
+import Sequence3WordConstellation from '../components/sequences/Sequence3WordConstellation';
+import Sequence4HorizontalLine from '../components/sequences/Sequence4HorizontalLine';
 ---
 
-<Layout title="cl1nical | Dashboard">
+<Layout title="cl1nical — The last tool you'll ever need">
 	<main>
-		<Hero client:only="react" />
+		<Sequence1TitleMachine client:only="react" />
+		<Sequence2ParticleExplosion client:only="react" />
+		<Sequence3WordConstellation client:only="react" />
+		<Sequence4HorizontalLine client:only="react" />
 	</main>
 </Layout>

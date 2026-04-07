@@ -1,0 +1,29 @@
+import { useState, useEffect } from 'react';
+
+interface MousePosition {
+  x: number;
+  y: number;
+}
+
+export function useMousePosition(): MousePosition {
+  const [mousePosition, setMousePosition] = useState<MousePosition>({ x: 0, y: 0 });
+
+  useEffect(() => {
+    let rafId: number;
+    
+    const updateMousePosition = (e: MouseEvent) => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        setMousePosition({ x: e.clientX, y: e.clientY });
+      });
+    };
+
+    window.addEventListener('mousemove', updateMousePosition);
+    return () => {
+      window.removeEventListener('mousemove', updateMousePosition);
+      cancelAnimationFrame(rafId);
+    };
+  }, []);
+
+  return mousePosition;
+}

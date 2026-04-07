@@ -1,0 +1,8 @@
+---
+import Layout from '../layouts/Layout.astro';
+import BookmarksPage from '../components/pages/BookmarksPage';
+---
+
+<Layout title="cl1nical — Bookmarks" showNav={false}>
+  <BookmarksPage client:only="react" />
+</Layout>

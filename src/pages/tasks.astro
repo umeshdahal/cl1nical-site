@@ -1,0 +1,8 @@
+---
+import Layout from '../layouts/Layout.astro';
+import TasksPage from '../components/pages/TasksPage';
+---
+
+<Layout title="cl1nical — Tasks" showNav={false}>
+  <TasksPage client:only="react" />
+</Layout>
