@@ -59,7 +59,7 @@ const initialMessages: Record<string, Message[]> = {
 };
 
 // OpenRouter API configuration
-const OPENROUTER_API_KEY = ''; // Add your API key here
+const OPENROUTER_API_KEY = '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'; // Add your API key here
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // Free models available on OpenRouter
