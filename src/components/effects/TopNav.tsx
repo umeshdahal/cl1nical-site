@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { label: 'TASKS', href: '/tasks' },
   { label: 'BOOKMARKS', href: '/bookmarks' },
   { label: 'PASSWORDS', href: '/passwords' },
+  { label: 'ELECTIONS', href: '/elections' },
 ];
 
 export default function TopNav() {
