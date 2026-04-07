@@ -1,0 +1,8 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ProfilePage from '../components/auth/ProfilePage';
+---
+
+<Layout title="cl1nical — Profile" showNav={false}>
+  <ProfilePage client:only="react" />
+</Layout>
