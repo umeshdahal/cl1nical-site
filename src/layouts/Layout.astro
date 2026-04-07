@@ -3,6 +3,7 @@ import '../styles/global.css';
 import CustomCursor from '../components/effects/CustomCursor';
 import ScrollProgressIndicator from '../components/effects/ScrollProgressIndicator';
 import SectionCounter from '../components/effects/SectionCounter';
+import TopNav from '../components/effects/TopNav';
 
 interface Props {
 	title: string;
@@ -26,6 +27,9 @@ const { title, showNav = true } = Astro.props;
 		
 		<!-- Custom cursor -->
 		<CustomCursor client:only="react" />
+		
+		<!-- Top Navigation (always visible) -->
+		<TopNav client:only="react" />
 		
 		<!-- Scroll progress indicator -->
 		{showNav && <ScrollProgressIndicator client:only="react" />}

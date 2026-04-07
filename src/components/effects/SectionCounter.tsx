@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-const TOTAL_SEQUENCES = 4;
+const TOTAL_SEQUENCES = 3;
 
 export default function SectionCounter() {
   const [current, setCurrent] = useState(1);
