@@ -82,6 +82,8 @@ export default function GraphNavPage() {
   const [hoveredLabel, setHoveredLabel] = useState<string | null>(null);
   const [logs, setLogs] = useState<string[]>([]);
   const isDragging = useRef(false);
+  const wasDragged = useRef(false);
+  const mouseDownPos = useRef({ x: 0, y: 0 });
   const previousMouse = useRef({ x: 0, y: 0 });
   const rotation = useRef({ x: 0, y: 0 });
   const targetRotation = useRef({ x: 0, y: 0 });
@@ -196,6 +198,8 @@ export default function GraphNavPage() {
     // Mouse events
     const handleMouseDown = (e: MouseEvent) => {
       isDragging.current = true;
+      wasDragged.current = false;
+      mouseDownPos.current = { x: e.clientX, y: e.clientY };
       previousMouse.current = { x: e.clientX, y: e.clientY };
     };
 
@@ -206,6 +210,14 @@ export default function GraphNavPage() {
       if (isDragging.current) {
         const dx = e.clientX - previousMouse.current.x;
         const dy = e.clientY - previousMouse.current.y;
+        const totalDx = e.clientX - mouseDownPos.current.x;
+        const totalDy = e.clientY - mouseDownPos.current.y;
+        
+        // Mark as dragged if moved more than 5 pixels
+        if (Math.abs(totalDx) > 5 || Math.abs(totalDy) > 5) {
+          wasDragged.current = true;
+        }
+        
         targetRotation.current.y += dx * 0.005;
         targetRotation.current.x += dy * 0.005;
         previousMouse.current = { x: e.clientX, y: e.clientY };
@@ -231,6 +243,9 @@ export default function GraphNavPage() {
     };
 
     const handleClick = () => {
+      // Don't navigate if we were dragging
+      if (wasDragged.current) return;
+      
       raycasterRef.current.setFromCamera(mouseRef.current, camera);
       const intersects = raycasterRef.current.intersectObjects(labelSprites);
       if (intersects.length > 0) {
