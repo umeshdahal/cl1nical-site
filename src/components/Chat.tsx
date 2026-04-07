@@ -59,7 +59,7 @@ const initialMessages: Record<string, Message[]> = {
 };
 
 // OpenRouter API configuration
-const OPENROUTER_API_KEY = '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'; // Add your API key here
+const OPENROUTER_API_KEY = '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';
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
 
 // Free models available on OpenRouter
@@ -85,7 +85,6 @@ export default function Chat({ darkMode }: ChatProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, selectedContact, isTyping]);
 
-  // Clear unread when selecting a contact
   useEffect(() => {
     if (selectedContact) {
       setContacts(prev => prev.map(c => 
@@ -94,7 +93,6 @@ export default function Chat({ darkMode }: ChatProps) {
     }
   }, [selectedContact]);
 
-  // Contact personalities for AI responses
   const contactPersonalities: Record<string, { systemPrompt: string; fallbackResponses: string[] }> = {
     'ai': {
       systemPrompt: 'You are a helpful AI assistant integrated into cl1nical, a productivity dashboard. Be concise, friendly, and helpful. You can help with coding, productivity tips, and general questions.',
@@ -158,15 +156,17 @@ export default function Chat({ darkMode }: ChatProps) {
     },
   };
 
-  const getAIResponse = async (userMessage: string, contactId: string): Promise<string> => {
+  const getAIResponse = async (userMessage: string, contactId: string, conversationHistory: Message[]): Promise<string> => {
     const personality = contactPersonalities[contactId] || contactPersonalities['ai'];
 
-    if (!OPENROUTER_API_KEY) {
-      // Fallback responses when no API key is set
-      return personality.fallbackResponses[Math.floor(Math.random() * personality.fallbackResponses.length)];
-    }
+    // Build conversation history for context
+    const historyMessages = conversationHistory.slice(-10).map(msg => ({
+      role: msg.isOwn ? 'user' : 'assistant',
+      content: msg.text,
+    }));
 
     try {
+      console.log('Sending request to OpenRouter API...');
       const response = await fetch(OPENROUTER_API_URL, {
         method: 'POST',
         headers: {
@@ -179,18 +179,35 @@ export default function Chat({ darkMode }: ChatProps) {
           model: AI_MODELS[Math.floor(Math.random() * AI_MODELS.length)],
           messages: [
             { role: 'system', content: personality.systemPrompt },
+            ...historyMessages,
             { role: 'user', content: userMessage },
           ],
           max_tokens: 500,
+          temperature: 0.7,
         }),
       });
 
-      if (!response.ok) throw new Error('API request failed');
+      console.log('API Response status:', response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error:', errorText);
+        throw new Error(`API request failed: ${response.status}`);
+      }
       
       const data = await response.json();
-      return data.choices[0]?.message?.content || "I'm sorry, I couldn't process that request.";
+      console.log('API Response data:', data);
+      
+      const aiResponse = data.choices?.[0]?.message?.content;
+      if (!aiResponse) {
+        console.error('No content in API response:', data);
+        throw new Error('No content in response');
+      }
+      
+      return aiResponse;
     } catch (error) {
       console.error('AI response error:', error);
+      // Return fallback response on error
       return personality.fallbackResponses[Math.floor(Math.random() * personality.fallbackResponses.length)];
     }
   };
@@ -199,10 +216,12 @@ export default function Chat({ darkMode }: ChatProps) {
     if (!newMessage.trim() && selectedFiles.length === 0) return;
     if (!selectedContact) return;
 
+    const currentMsg = newMessage; // Capture before clearing
+
     const userMessage: Message = {
       id: Date.now().toString(),
       sender: 'You',
-      text: newMessage,
+      text: currentMsg,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       files: selectedFiles.length > 0 ? selectedFiles : undefined,
       isOwn: true,
@@ -215,21 +234,27 @@ export default function Chat({ darkMode }: ChatProps) {
     setNewMessage('');
     setSelectedFiles([]);
 
-    // Update last message in contacts
     setContacts(prev => prev.map(c => 
-      c.id === selectedContact ? { ...c, lastMessage: newMessage || 'File shared' } : c
+      c.id === selectedContact ? { ...c, lastMessage: currentMsg || 'File shared' } : c
     ));
 
-    // If chatting with AI, get response
+    // All contacts are AI-powered, so always get a response
     const contact = contacts.find(c => c.id === selectedContact);
     if (contact?.isAI) {
       setIsTyping(true);
-      const aiResponse = await getAIResponse(newMessage, selectedContact);
+      
+      // Get current messages for this contact to pass as history
+      const currentMessages = messages[selectedContact] || [];
+      const aiResponse = await getAIResponse(currentMsg, selectedContact, [...currentMessages, userMessage]);
+      
       setIsTyping(false);
+
+      const contactName = contactPersonalities[selectedContact] ? 
+        (selectedContact === 'ai' ? 'AI Assistant' : contact.name) : 'AI Assistant';
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        sender: 'AI Assistant',
+        sender: contactName,
         text: aiResponse,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         isOwn: false,
@@ -353,7 +378,7 @@ export default function Chat({ darkMode }: ChatProps) {
               <div>
                 <p className={`text-sm font-medium ${darkMode ? 'text-white' : 'text-gray-900'}`}>{currentContact.name}</p>
                 <p className={`text-xs ${currentContact.status === 'online' ? 'text-green-500' : darkMode ? 'text-white/40' : 'text-gray-500'}`}>
-                  {currentContact.isAI ? 'AI Assistant' : currentContact.status === 'online' ? 'Online' : currentContact.status === 'away' ? 'Away' : 'Offline'}
+                  {currentContact.isAI ? 'AI Powered' : currentContact.status === 'online' ? 'Online' : currentContact.status === 'away' ? 'Away' : 'Offline'}
                 </p>
               </div>
             </div>
@@ -451,7 +476,7 @@ export default function Chat({ darkMode }: ChatProps) {
                   value={newMessage}
                   onChange={e => setNewMessage(e.target.value)}
                   onKeyDown={e => e.key === 'Enter' && sendMessage()}
-                  placeholder={currentContact.isAI ? "Ask me anything..." : "Type a message..."}
+                  placeholder="Type a message..."
                   className={`flex-1 px-4 py-2 border rounded-xl text-sm outline-none ${
                     darkMode ? 'bg-white/[0.04] border-white/[0.08] focus:border-white/[0.2] text-white placeholder:text-white/30' : 'bg-gray-50 border-gray-200 focus:border-indigo-300 text-gray-900 placeholder:text-gray-400'
                   }`}
@@ -473,7 +498,7 @@ export default function Chat({ darkMode }: ChatProps) {
             <div className="text-center">
               <MessageSquare size={48} className={`mx-auto mb-4 ${darkMode ? 'text-white/20' : 'text-gray-300'}`} />
               <p className={`text-lg font-medium ${darkMode ? 'text-white/40' : 'text-gray-500'}`}>Select a conversation</p>
-              <p className={`text-sm ${darkMode ? 'text-white/20' : 'text-gray-400'}`}>Choose a contact or AI assistant to start messaging</p>
+              <p className={`text-sm ${darkMode ? 'text-white/20' : 'text-gray-400'}`}>Choose a contact to start messaging</p>
             </div>
           </div>
         )}
