@@ -6,12 +6,14 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccess('');
     setLoading(true);
 
     if (password.length < 6) {
@@ -34,7 +36,10 @@ export default function RegisterPage() {
       setError(error.message);
       setLoading(false);
     } else {
-      window.location.href = '/login?registered=true';
+      setSuccess('Account created! Redirecting to login...');
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1500);
     }
   };
 
@@ -58,6 +63,12 @@ export default function RegisterPage() {
           {error && (
             <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
               {error}
+            </div>
+          )}
+
+          {success && (
+            <div className="mb-4 p-3 bg-green-500/10 border border-green-500/20 rounded-lg text-green-400 text-sm">
+              {success}
             </div>
           )}
 

@@ -1,14 +1,8 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import Sequence1TitleMachine from '../components/sequences/Sequence1TitleMachine';
-import Sequence3WordConstellation from '../components/sequences/Sequence3WordConstellation';
-import Sequence4HorizontalLine from '../components/sequences/Sequence4HorizontalLine';
+import GraphNavPage from '../components/pages/GraphNavPage';
 ---
 
-<Layout title="cl1nical — The last tool you'll ever need">
-	<main>
-		<Sequence1TitleMachine client:only="react" />
-		<Sequence3WordConstellation client:only="react" />
-		<Sequence4HorizontalLine client:only="react" />
-	</main>
+<Layout title="cl1nical — Navigate">
+  <GraphNavPage client:only="react" />
 </Layout>

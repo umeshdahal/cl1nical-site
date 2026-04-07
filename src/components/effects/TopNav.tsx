@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createClient } from '../../lib/supabase/client';
 
 const NAV_ITEMS = [
   { label: 'TASKS', href: '/tasks' },
@@ -8,13 +9,28 @@ const NAV_ITEMS = [
 
 export default function TopNav() {
   const [scrolled, setScrolled] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const supabase = createClient();
 
   useEffect(() => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
+
+    // Check auth status
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setLoggedIn(!!session);
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setLoggedIn(!!session);
+    });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      subscription.unsubscribe();
+    };
   }, []);
 
   return (
@@ -51,7 +67,7 @@ export default function TopNav() {
       </a>
 
       {/* Nav Links */}
-      <div style={{ display: 'flex', gap: '24px' }}>
+      <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
         {NAV_ITEMS.map(item => (
           <a
             key={item.label}
@@ -70,6 +86,36 @@ export default function TopNav() {
             {item.label}
           </a>
         ))}
+        {loggedIn ? (
+          <a
+            href="/dashboard"
+            style={{
+              fontSize: '11px',
+              letterSpacing: '0.1em',
+              color: '#E8A020',
+              textDecoration: 'none',
+              textTransform: 'uppercase',
+            }}
+          >
+            Dashboard
+          </a>
+        ) : (
+          <a
+            href="/login"
+            style={{
+              fontSize: '11px',
+              letterSpacing: '0.1em',
+              color: '#E8A020',
+              textDecoration: 'none',
+              textTransform: 'uppercase',
+              padding: '6px 12px',
+              border: '1px solid #E8A020',
+              borderRadius: '4px',
+            }}
+          >
+            Login
+          </a>
+        )}
       </div>
     </nav>
   );

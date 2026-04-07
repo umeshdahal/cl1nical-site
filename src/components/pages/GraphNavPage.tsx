@@ -8,57 +8,64 @@ interface Node {
   href: string;
 }
 
-const LABELS = [
-  'INTERACTIVE ART', 'CLIENT WORKS', 'ABOUT', 'CONTACT', 'LAB',
-  'MOVING IMAGE', 'ARCHIVE', 'TASKS', 'BOOKMARKS', 'PASSWORDS',
-  'HOME', 'GRAPH', 'DESIGN', 'DEVELOP', 'CREATE',
-  'EXPLORE', 'NAVIGATE', 'DISCOVER', 'BUILD', 'SHIP',
+// Only nodes that link to actual pages
+const PAGE_NODES: Node[] = [
+  { id: 'home', label: 'HOME', position: [0, 0, 0], href: '/' },
+  { id: 'tasks', label: 'TASKS', position: [0, 0, 0], href: '/tasks' },
+  { id: 'bookmarks', label: 'BOOKMARKS', position: [0, 0, 0], href: '/bookmarks' },
+  { id: 'passwords', label: 'PASSWORDS', position: [0, 0, 0], href: '/passwords' },
+  { id: 'login', label: 'LOGIN', position: [0, 0, 0], href: '/login' },
+  { id: 'register', label: 'REGISTER', position: [0, 0, 0], href: '/register' },
+  { id: 'dashboard', label: 'DASHBOARD', position: [0, 0, 0], href: '/dashboard' },
+  { id: 'profile', label: 'PROFILE', position: [0, 0, 0], href: '/profile' },
+  { id: 'graph', label: 'GRAPH', position: [0, 0, 0], href: '/graph-nav' },
 ];
 
-const HREFS: Record<string, string> = {
-  'HOME': '/',
-  'TASKS': '/tasks',
-  'BOOKMARKS': '/bookmarks',
-  'PASSWORDS': '/passwords',
-  'GRAPH': '/graph-nav',
-};
+// Decorative sphere nodes (no links)
+const SPHERE_NODES: Node[] = [
+  { id: 's1', label: '•', position: [0, 0, 0], href: '' },
+  { id: 's2', label: '•', position: [0, 0, 0], href: '' },
+  { id: 's3', label: '•', position: [0, 0, 0], href: '' },
+  { id: 's4', label: '•', position: [0, 0, 0], href: '' },
+  { id: 's5', label: '•', position: [0, 0, 0], href: '' },
+  { id: 's6', label: '•', position: [0, 0, 0], href: '' },
+  { id: 's7', label: '•', position: [0, 0, 0], href: '' },
+  { id: 's8', label: '•', position: [0, 0, 0], href: '' },
+  { id: 's9', label: '•', position: [0, 0, 0], href: '' },
+  { id: 's10', label: '•', position: [0, 0, 0], href: '' },
+  { id: 's11', label: '•', position: [0, 0, 0], href: '' },
+  { id: 's12', label: '•', position: [0, 0, 0], href: '' },
+];
 
-function generateNodes(count: number): Node[] {
-  const nodes: Node[] = [];
-  const r = 12;
-  
-  for (let i = 0; i < count; i++) {
-    const phi = Math.acos(1 - 2 * (i + 0.5) / count);
+const ALL_NODES = [...PAGE_NODES, ...SPHERE_NODES];
+
+function distributeOnSphere(nodes: Node[], radius: number): Node[] {
+  return nodes.map((node, i) => {
+    const phi = Math.acos(1 - 2 * (i + 0.5) / nodes.length);
     const theta = Math.PI * (1 + Math.sqrt(5)) * i;
-    const label = LABELS[i % LABELS.length];
-    const id = `node-${i}`;
-    nodes.push({
-      id,
-      label,
+    return {
+      ...node,
       position: [
-        r * Math.sin(phi) * Math.cos(theta) + (Math.random() - 0.5) * 4,
-        r * Math.sin(phi) * Math.sin(theta) + (Math.random() - 0.5) * 4,
-        r * Math.cos(phi) + (Math.random() - 0.5) * 4,
+        radius * Math.sin(phi) * Math.cos(theta),
+        radius * Math.sin(phi) * Math.sin(theta),
+        radius * Math.cos(phi),
       ],
-      href: HREFS[label] || '/',
-    });
-  }
-  return nodes;
+    };
+  });
 }
 
-const NODES = generateNodes(60);
+const DISTRIBUTED_NODES = distributeOnSphere(ALL_NODES, 10);
 
 function generateEdges(nodes: Node[]): [number, number][] {
   const edges: [number, number][] = [];
-  const maxDist = 14;
-  const minDist = 2;
+  const maxDist = 12;
   
   for (let i = 0; i < nodes.length; i++) {
     for (let j = i + 1; j < nodes.length; j++) {
       const a = nodes[i].position;
       const b = nodes[j].position;
       const dist = Math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2);
-      if (dist < maxDist && dist > minDist) {
+      if (dist < maxDist) {
         edges.push([i, j]);
       }
     }
@@ -66,7 +73,7 @@ function generateEdges(nodes: Node[]): [number, number][] {
   return edges;
 }
 
-const EDGES = generateEdges(NODES);
+const EDGES = generateEdges(DISTRIBUTED_NODES);
 
 export default function GraphNavPage() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -118,31 +125,32 @@ export default function GraphNavPage() {
     // Create text sprites
     const labelSprites: THREE.Sprite[] = [];
     
-    NODES.forEach((node, i) => {
+    DISTRIBUTED_NODES.forEach((node, i) => {
+      const isPageNode = i < PAGE_NODES.length;
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d')!;
       canvas.width = 1024;
       canvas.height = 128;
       
-      ctx.fillStyle = '#ffffff';
-      ctx.font = 'bold 48px monospace';
+      ctx.fillStyle = isPageNode ? '#ffffff' : '#444444';
+      ctx.font = isPageNode ? 'bold 48px monospace' : 'bold 72px monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(node.label, 512, 64);
 
       const texture = new THREE.CanvasTexture(canvas);
       texture.minFilter = THREE.LinearFilter;
-      const spriteMaterial = new THREE.SpriteMaterial({
-        map: texture,
+      const spriteMaterial = new THREE.SpriteMaterial({ 
+        map: texture, 
         transparent: true,
-        opacity: 0.4 + Math.random() * 0.5,
+        opacity: isPageNode ? 0.6 : 0.2,
         depthWrite: false,
         depthTest: false,
       });
       const sprite = new THREE.Sprite(spriteMaterial);
       sprite.position.set(...node.position);
-      sprite.scale.set(6, 0.75, 1);
-      sprite.userData = { id: node.id, label: node.label, href: node.href, index: i };
+      sprite.scale.set(isPageNode ? 6 : 2, isPageNode ? 0.75 : 0.25, 1);
+      sprite.userData = { id: node.id, label: node.label, href: node.href, index: i, isPageNode };
       group.add(sprite);
       labelSprites.push(sprite);
     });
@@ -160,8 +168,8 @@ export default function GraphNavPage() {
     const lines: THREE.Line[] = [];
     EDGES.forEach(([from, to]) => {
       const geometry = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(...NODES[from].position),
-        new THREE.Vector3(...NODES[to].position),
+        new THREE.Vector3(...DISTRIBUTED_NODES[from].position),
+        new THREE.Vector3(...DISTRIBUTED_NODES[to].position),
       ]);
       const line = new THREE.Line(geometry, lineMaterial.clone());
       group.add(line);
@@ -185,7 +193,8 @@ export default function GraphNavPage() {
       // Subtle label pulse
       labelSprites.forEach((sprite, i) => {
         const isHovered = sprite.userData.label === hoveredLabel;
-        const targetOpacity = isHovered ? 1 : 0.2 + Math.sin(Date.now() * 0.001 + i * 0.1) * 0.1;
+        const isPageNode = sprite.userData.isPageNode;
+        const targetOpacity = isHovered ? 1 : (isPageNode ? 0.4 + Math.sin(Date.now() * 0.001 + i * 0.1) * 0.1 : 0.15);
         if (sprite.material instanceof THREE.SpriteMaterial) {
           sprite.material.opacity += (targetOpacity - sprite.material.opacity) * 0.1;
         }
@@ -213,7 +222,6 @@ export default function GraphNavPage() {
         const totalDx = e.clientX - mouseDownPos.current.x;
         const totalDy = e.clientY - mouseDownPos.current.y;
         
-        // Mark as dragged if moved more than 5 pixels
         if (Math.abs(totalDx) > 5 || Math.abs(totalDy) > 5) {
           wasDragged.current = true;
         }
@@ -230,7 +238,7 @@ export default function GraphNavPage() {
       if (intersects.length > 0) {
         const label = intersects[0].object.userData.label;
         setHoveredLabel(label);
-        document.body.style.cursor = 'pointer';
+        document.body.style.cursor = intersects[0].object.userData.isPageNode ? 'pointer' : 'grab';
       } else {
         setHoveredLabel(null);
         document.body.style.cursor = isDragging.current ? 'grabbing' : 'grab';
@@ -243,15 +251,16 @@ export default function GraphNavPage() {
     };
 
     const handleClick = () => {
-      // Don't navigate if we were dragging
       if (wasDragged.current) return;
       
       raycasterRef.current.setFromCamera(mouseRef.current, camera);
       const intersects = raycasterRef.current.intersectObjects(labelSprites);
       if (intersects.length > 0) {
-        const { label, href } = intersects[0].object.userData;
-        addLog(`HOVER ${label}`);
-        window.location.href = href;
+        const { label, href, isPageNode } = intersects[0].object.userData;
+        if (isPageNode && href) {
+          addLog(`NAVIGATE ${label}`);
+          window.location.href = href;
+        }
       }
     };
 
