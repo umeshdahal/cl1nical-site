@@ -1,8 +1,54 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import ProfilePage from '../components/auth/ProfilePage';
+import { createServerClient } from '../lib/supabase';
+import ProfileEditor from '../components/ProfileEditor';
+
+const supabase = createServerClient({
+  get: (name) => Astro.cookies.get(name)?.value,
+  set: (name, value, options) => Astro.cookies.set(name, value, options),
+  remove: (name, options) => Astro.cookies.delete(name, options),
+});
+
+const { data: { session } } = await supabase.auth.getSession();
+
+if (!session) {
+  return Astro.redirect('/login');
+}
+
+const { data: profile } = await supabase
+  .from('profiles')
+  .select('*')
+  .eq('id', session.user.id)
+  .single();
 ---
 
-<Layout title="cl1nical — Profile" showNav={false}>
-  <ProfilePage client:only="react" />
-</Layout>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Profile — cl1nical</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body class="min-h-screen bg-[#0a0a0a] text-[#F5F0E8]">
+    <nav class="border-b border-[#222222] px-6 py-4 flex items-center justify-between">
+      <a href="/" class="font-heading text-xl font-semibold">cl1nical</a>
+      <div class="flex items-center gap-4">
+        <a href="/dashboard" class="font-mono text-sm text-[#8C8882] hover:text-[#F5F0E8] transition-colors">Dashboard</a>
+        <form action="/api/logout" method="POST">
+          <button type="submit" class="font-mono text-sm text-red-400 hover:text-red-300 transition-colors">Logout</button>
+        </form>
+      </div>
+    </nav>
+
+    <main class="max-w-2xl mx-auto px-6 py-12">
+      <h1 class="font-heading text-3xl font-semibold mb-8">Profile Settings</h1>
+      <ProfileEditor
+        client:load
+        email={session.user.email ?? ''}
+        displayName={profile?.display_name ?? ''}
+        avatarUrl={profile?.avatar_url ?? ''}
+        settings={profile?.settings ?? {}}
+      />
+    </main>
+  </body>
+</html>

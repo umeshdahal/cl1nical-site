@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { createClient } from '../../lib/supabase/client';
+import { createBrowserClient } from '../../lib/supabase';
 
 const NAV_ITEMS = [
   { label: 'TASKS', href: '/tasks' },
@@ -10,7 +10,6 @@ const NAV_ITEMS = [
 export default function TopNav() {
   const [scrolled, setScrolled] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
-  const supabase = createClient();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -18,7 +17,7 @@ export default function TopNav() {
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
 
-    // Check auth status
+    const supabase = createBrowserClient();
     supabase.auth.getSession().then(({ data: { session } }) => {
       setLoggedIn(!!session);
     });
