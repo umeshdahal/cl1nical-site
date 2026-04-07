@@ -1,0 +1,4 @@
+- You have full autonomy over this project directory and all subdirectories
+- Never ask for permission to navigate directories or run npm scripts
+- Run npm run dev, npm install, etc. freely without confirmation
+- Assume you always have write access to all files
