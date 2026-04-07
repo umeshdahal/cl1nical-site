@@ -119,26 +119,27 @@ export default function GraphNavPage() {
     NODES.forEach((node, i) => {
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d')!;
-      canvas.width = 512;
-      canvas.height = 64;
+      canvas.width = 1024;
+      canvas.height = 128;
       
       ctx.fillStyle = '#ffffff';
-      ctx.font = '10px monospace';
+      ctx.font = 'bold 48px monospace';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(node.label, 256, 32);
+      ctx.fillText(node.label, 512, 64);
 
       const texture = new THREE.CanvasTexture(canvas);
       texture.minFilter = THREE.LinearFilter;
-      const spriteMaterial = new THREE.SpriteMaterial({ 
-        map: texture, 
+      const spriteMaterial = new THREE.SpriteMaterial({
+        map: texture,
         transparent: true,
-        opacity: 0.3 + Math.random() * 0.4,
+        opacity: 0.4 + Math.random() * 0.5,
         depthWrite: false,
+        depthTest: false,
       });
       const sprite = new THREE.Sprite(spriteMaterial);
       sprite.position.set(...node.position);
-      sprite.scale.set(4, 0.5, 1);
+      sprite.scale.set(6, 0.75, 1);
       sprite.userData = { id: node.id, label: node.label, href: node.href, index: i };
       group.add(sprite);
       labelSprites.push(sprite);
