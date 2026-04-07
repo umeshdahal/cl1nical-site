@@ -1,4 +1,4 @@
-import { Home, Zap, Shield, Clock, Code, MessageCircle, Settings } from 'lucide-react';
+import { Home, Zap, Shield, Bookmark } from 'lucide-react';
 
 interface HomeLandingProps {
   darkMode: boolean;
@@ -7,12 +7,9 @@ interface HomeLandingProps {
 
 export default function HomeLanding({ darkMode, onNavigate }: HomeLandingProps) {
   const quickActions = [
-    { id: 'notes', label: 'Notes', icon: <Code size={24} />, desc: 'Quick notes & ideas' },
     { id: 'tasks', label: 'Tasks', icon: <Zap size={24} />, desc: 'Todo & productivity' },
-    { id: 'chat', label: 'Chat', icon: <MessageCircle size={24} />, desc: 'Messages & AI' },
+    { id: 'bookmarks', label: 'Bookmarks', icon: <Bookmark size={24} />, desc: 'Saved links' },
     { id: 'password', label: 'Password', icon: <Shield size={24} />, desc: 'Generate passwords' },
-    { id: 'pomodoro', label: 'Focus', icon: <Clock size={24} />, desc: 'Pomodoro timer' },
-    { id: 'profile', label: 'Settings', icon: <Settings size={24} />, desc: 'Preferences' },
   ];
 
   return (
@@ -66,12 +63,11 @@ export default function HomeLanding({ darkMode, onNavigate }: HomeLandingProps) 
         <h2 className={`text-lg font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
           Quick Stats
         </h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {[
-            { label: 'Tools Available', value: '16+' },
+            { label: 'Tools Available', value: '3' },
             { label: 'Dark Mode', value: 'Yes' },
-            { label: 'AI Chat', value: 'Active' },
-            { label: 'File Sharing', value: 'Enabled' },
+            { label: 'Secure', value: 'Local' },
           ].map((stat, i) => (
             <div key={i} className={`p-4 rounded-xl ${darkMode ? 'bg-white/[0.04]' : 'bg-white'}`}>
               <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{stat.value}</p>

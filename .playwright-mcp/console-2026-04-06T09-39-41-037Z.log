@@ -1,0 +1,8 @@
+[      47ms] The requested module '/@fs/C:/Users/umesh/PycharmProjects/cl1nical-site/node_modules/axobject-query/lib/index.js?v=d1330fda' does not provide an export named 'AXObjectRoles'
+[      26ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:4321/node_modules/.vite/deps/@astrojs_react_client__js.js?v=0f09cad3:20103
+[     155ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:4321/:0
+[  630748ms] [LOG] [vite] server connection lost. Polling for restart... @ http://localhost:4321/@vite/client:1695
+[  632088ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:4321/node_modules/.vite/deps/@astrojs_react_client__js.js?v=06445749:20103
+[  974292ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:4321/node_modules/.vite/deps/@astrojs_react_client__js.js?v=06445749:20103
+[  975247ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:4321/node_modules/.vite/deps/@astrojs_react_client__js.js?v=3b07a9c3:20103
+[  993000ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:4321/node_modules/.vite/deps/@astrojs_react_client__js.js?v=3b07a9c3:20103

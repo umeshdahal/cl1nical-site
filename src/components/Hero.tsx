@@ -1,48 +1,22 @@
 import { useState, useEffect, useRef } from 'react';
 import { isAuthenticated, getCurrentUser, logout } from '../lib/auth';
 import Login from './Login';
-import Notes from './Notes';
 import Tasks from './Tasks';
 import Bookmarks from './Bookmarks';
 import PasswordGenerator from './PasswordGenerator';
-import Pomodoro from './Pomodoro';
-import TextTools from './TextTools';
-import MarkdownEditor from './MarkdownEditor';
-import RegexTester from './RegexTester';
-import TimestampConverter from './TimestampConverter';
-import JWTDecoder from './JWTDecoder';
-import HashGenerator from './HashGenerator';
-import ColorConverter from './ColorConverter';
-import DiffChecker from './DiffChecker';
-import QRCodeGenerator from './QRCodeGenerator';
-import ProfileSettings from './ProfileSettings';
-import Chat from './Chat';
 import HomeLanding from './HomeLanding';
 import {
-  FileText, CheckSquare, Bookmark, Shield, Timer, FileType,
+  CheckSquare, Bookmark, Shield,
   Sun, Moon, LogOut, User, Menu, X, Zap,
-  Code, Clock, Key, Hash, Palette, GitCompare, QrCode,
-  MessageCircle, Settings, ChevronDown, Home
+  ChevronDown, Home
 } from 'lucide-react';
 
-type ModuleType = 'home' | 'notes' | 'tasks' | 'bookmarks' | 'password' | 'pomodoro' | 'texttools' | 'markdown' | 'regex' | 'timestamp' | 'jwt' | 'hash' | 'color' | 'diff' | 'qrcode' | 'chat' | 'profile';
+type ModuleType = 'home' | 'tasks' | 'bookmarks' | 'password';
 
 const modules: { id: ModuleType; label: string; icon: React.ReactNode; description: string }[] = [
-  { id: 'notes', label: 'Notes', icon: <FileText size={18} />, description: 'Quick notes & ideas' },
   { id: 'tasks', label: 'Tasks', icon: <CheckSquare size={18} />, description: 'Todo & productivity' },
   { id: 'bookmarks', label: 'Bookmarks', icon: <Bookmark size={18} />, description: 'Saved links' },
   { id: 'password', label: 'Password', icon: <Shield size={18} />, description: 'Generate secure passwords' },
-  { id: 'pomodoro', label: 'Focus', icon: <Timer size={18} />, description: 'Pomodoro timer' },
-  { id: 'texttools', label: 'Text Tools', icon: <FileType size={18} />, description: 'JSON, Base64, URL encode' },
-  { id: 'markdown', label: 'Markdown', icon: <Code size={18} />, description: 'Live markdown editor' },
-  { id: 'regex', label: 'Regex', icon: <Code size={18} />, description: 'Test regular expressions' },
-  { id: 'timestamp', label: 'Timestamp', icon: <Clock size={18} />, description: 'Unix timestamp converter' },
-  { id: 'jwt', label: 'JWT', icon: <Key size={18} />, description: 'Decode JWT tokens' },
-  { id: 'hash', label: 'Hash', icon: <Hash size={18} />, description: 'Generate SHA hashes' },
-  { id: 'color', label: 'Color', icon: <Palette size={18} />, description: 'Convert color formats' },
-  { id: 'diff', label: 'Diff', icon: <GitCompare size={18} />, description: 'Compare text differences' },
-  { id: 'qrcode', label: 'QR Code', icon: <QrCode size={18} />, description: 'Generate QR codes' },
-  { id: 'chat', label: 'Chat', icon: <MessageCircle size={18} />, description: 'Messages & AI' },
 ];
 
 export default function Hero() {
@@ -195,22 +169,6 @@ export default function Hero() {
                       >
                         <Home size={16} /> Home
                       </button>
-                      <button
-                        onClick={() => { setActiveModule('chat'); setShowProfileDropdown(false); }}
-                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
-                          darkMode ? 'hover:bg-white/[0.08] text-white/70' : 'hover:bg-gray-100 text-gray-700'
-                        }`}
-                      >
-                        <MessageCircle size={16} /> Chat
-                      </button>
-                      <button
-                        onClick={() => { setActiveModule('profile'); setShowProfileDropdown(false); }}
-                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
-                          darkMode ? 'hover:bg-white/[0.08] text-white/70' : 'hover:bg-gray-100 text-gray-700'
-                        }`}
-                      >
-                        <Settings size={16} /> Settings
-                      </button>
                     </div>
                     <div className={`p-2 border-t ${darkMode ? 'border-white/[0.08]' : 'border-gray-200'}`}>
                       <button
@@ -289,22 +247,9 @@ export default function Hero() {
           {/* Main Content */}
           <main className="flex-1 p-4 md:p-8">
             {activeModule === 'home' && <HomeLanding darkMode={darkMode} onNavigate={(mod) => setActiveModule(mod as ModuleType)} />}
-            {activeModule === 'profile' && <ProfileSettings darkMode={darkMode} onProfileUpdate={handleProfileUpdate} />}
-            {activeModule === 'chat' && <Chat darkMode={darkMode} />}
-            {activeModule === 'notes' && <Notes darkMode={darkMode} />}
             {activeModule === 'tasks' && <Tasks darkMode={darkMode} />}
             {activeModule === 'bookmarks' && <Bookmarks darkMode={darkMode} />}
             {activeModule === 'password' && <PasswordGenerator />}
-            {activeModule === 'pomodoro' && <Pomodoro />}
-            {activeModule === 'texttools' && <TextTools darkMode={darkMode} />}
-            {activeModule === 'markdown' && <MarkdownEditor darkMode={darkMode} />}
-            {activeModule === 'regex' && <RegexTester darkMode={darkMode} />}
-            {activeModule === 'timestamp' && <TimestampConverter darkMode={darkMode} />}
-            {activeModule === 'jwt' && <JWTDecoder darkMode={darkMode} />}
-            {activeModule === 'hash' && <HashGenerator darkMode={darkMode} />}
-            {activeModule === 'color' && <ColorConverter darkMode={darkMode} />}
-            {activeModule === 'diff' && <DiffChecker darkMode={darkMode} />}
-            {activeModule === 'qrcode' && <QRCodeGenerator darkMode={darkMode} />}
           </main>
         </div>
       </div>

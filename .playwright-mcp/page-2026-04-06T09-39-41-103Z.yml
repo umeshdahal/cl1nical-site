@@ -1,0 +1,30 @@
+- main [ref=e2]:
+  - generic [ref=e6]:
+    - generic [ref=e7]:
+      - generic [ref=e9]: cl1
+      - heading "Welcome Back" [level=1] [ref=e10]
+      - paragraph [ref=e11]: Sign in to your dashboard
+    - generic [ref=e12]:
+      - generic [ref=e13]:
+        - generic [ref=e14]: Username
+        - generic [ref=e15]:
+          - img [ref=e17]
+          - textbox "Enter your username" [ref=e20]
+      - generic [ref=e21]:
+        - generic [ref=e22]: Password
+        - generic [ref=e23]:
+          - img [ref=e25]
+          - textbox "Enter your password" [ref=e28]
+          - button [ref=e29]:
+            - img [ref=e30]
+      - button "Sign In" [ref=e33]:
+        - img [ref=e34]
+        - text: Sign In
+    - button "Don't have an account? Sign Up" [ref=e38]
+    - generic [ref=e39]:
+      - paragraph [ref=e40]: "Demo Credentials:"
+      - paragraph [ref=e41]:
+        - text: "Username:"
+        - code [ref=e42]: admin
+        - text: "Password:"
+        - code [ref=e43]: admin123
