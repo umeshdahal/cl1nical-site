@@ -1,6 +1,7 @@
 ---
 import ProfileEditor from '../components/ProfileEditor';
 import AppLayout from '../layouts/AppLayout.astro';
+import { getProfileByUser } from '../lib/profile';
 import { createServerClient } from '../lib/supabase';
 
 const supabase = createServerClient(Astro.cookies);
@@ -10,11 +11,8 @@ if (!user) {
   return Astro.redirect('/login');
 }
 
-const { data: profile } = await supabase
-  .from('profiles')
-  .select('*')
-  .eq('id', user.id)
-  .single();
+const { profile, missingProfilesTable } = await getProfileByUser(supabase, user);
+const profileSettings = (profile?.settings ?? {}) as Record<string, unknown>;
 ---
 
 <AppLayout title="Profile | cl1nical" description="Manage your cl1nical profile">
@@ -33,6 +31,11 @@ const { data: profile } = await supabase
       <p class="text-xs uppercase tracking-[0.22em] text-white/40">Profile</p>
       <h1 class="mt-4 font-heading text-4xl text-[var(--text-cream)]">Account settings</h1>
       <p class="mt-3 text-sm text-white/60">{user.email}</p>
+      {missingProfilesTable && (
+        <div class="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+          Your Supabase project is missing the `public.profiles` table. Apply the latest migration, then profile changes will persist normally.
+        </div>
+      )}
     </div>
 
     <ProfileEditor
@@ -40,7 +43,7 @@ const { data: profile } = await supabase
       email={user.email ?? ''}
       displayName={profile?.display_name ?? ''}
       avatarUrl={profile?.avatar_url ?? ''}
-      settings={profile?.settings ?? {}}
+      settings={profileSettings}
     />
   </main>
 </AppLayout>

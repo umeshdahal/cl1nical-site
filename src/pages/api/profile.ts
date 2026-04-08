@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { upsertProfileByUser } from '../../lib/profile';
 import { createServerClient } from '../../lib/supabase';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
@@ -13,20 +14,22 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   }
 
   const body = await request.json();
-  const payload = {
-    id: user.id,
-    display_name: typeof body.display_name === 'string' ? body.display_name.trim() : null,
-    avatar_url: typeof body.avatar_url === 'string' ? body.avatar_url.trim() : null,
-    settings: typeof body.settings === 'object' && body.settings ? body.settings : {},
-    updated_at: new Date().toISOString(),
-  };
+  try {
+    const result = await upsertProfileByUser(supabase, user, {
+      display_name: typeof body.display_name === 'string' ? body.display_name.trim() : null,
+      avatar_url: typeof body.avatar_url === 'string' ? body.avatar_url.trim() : null,
+      settings: typeof body.settings === 'object' && body.settings ? body.settings : {},
+    });
 
-  const { error } = await supabase
-    .from('profiles')
-    .upsert(payload, { onConflict: 'id' });
-
-  if (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    if (!result.ok) {
+      return new Response(JSON.stringify({ error: result.error, missingProfilesTable: true }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to save profile';
+    return new Response(JSON.stringify({ error: message }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },
     });

@@ -1,6 +1,7 @@
 ---
 import AppLayout from '../layouts/AppLayout.astro';
 import { createServerClient } from '../lib/supabase';
+import { toAbsoluteUrl } from '../lib/site';
 
 let error = '';
 let email = '';
@@ -14,7 +15,13 @@ if (Astro.request.method === 'POST') {
     error = 'Password must be at least 8 characters.';
   } else {
     const supabase = createServerClient(Astro.cookies);
-    const { data, error: signUpError } = await supabase.auth.signUp({ email, password });
+    const { data, error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: toAbsoluteUrl('/auth/confirm'),
+      },
+    });
 
     if (signUpError) {
       error = signUpError.message;

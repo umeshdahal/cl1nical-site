@@ -32,67 +32,72 @@ export default function ProfileEditor({ email, displayName, avatarUrl, settings:
     setSaved(false);
     setError('');
 
-    const res = await fetch('/api/profile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ display_name: name, avatar_url: avatar, settings }),
-    });
+    try {
+      const res = await fetch('/api/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ display_name: name, avatar_url: avatar, settings }),
+      });
 
-    const result = await res.json();
+      const result = await res.json();
 
-    if (!res.ok) {
-      setError(result.error ?? 'Failed to save');
-    } else {
-      setSaved(true);
-      setTimeout(() => setSaved(false), 2000);
+      if (!res.ok) {
+        setError(result.error ?? 'Failed to save');
+      } else {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
+    } catch {
+      setError('Network error while saving profile changes.');
     }
+
     setSaving(false);
   };
 
   return (
     <>
-      <div className="bg-[#111111] border border-[#222222] rounded-2xl p-6 mb-6">
-        <h2 className="font-heading text-lg font-semibold mb-4">Account</h2>
+      <div className="mb-6 rounded-2xl border border-[#222222] bg-[#111111] p-6">
+        <h2 className="mb-4 font-heading text-lg font-semibold">Account</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-mono text-[#8C8882] mb-2">Email</label>
+            <label className="mb-2 block text-sm font-mono text-[#8C8882]">Email</label>
             <input
               type="email"
               value={email}
               disabled
-              className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#333333] rounded-lg text-[#8C8882] font-mono text-sm"
+              className="w-full rounded-lg border border-[#333333] bg-[#1a1a1a] px-4 py-3 font-mono text-sm text-[#8C8882]"
             />
           </div>
           <div>
-            <label className="block text-sm font-mono text-[#8C8882] mb-2">Display Name</label>
+            <label className="mb-2 block text-sm font-mono text-[#8C8882]">Display Name</label>
             <input
               type="text"
               value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#333333] rounded-lg text-[#F5F0E8] font-mono text-sm focus:outline-none focus:border-[#E8A020] transition-colors"
+              onChange={(event) => setName(event.target.value)}
+              className="w-full rounded-lg border border-[#333333] bg-[#1a1a1a] px-4 py-3 font-mono text-sm text-[#F5F0E8] transition-colors focus:border-[#E8A020] focus:outline-none"
             />
           </div>
           <div>
-            <label className="block text-sm font-mono text-[#8C8882] mb-2">Avatar URL</label>
+            <label className="mb-2 block text-sm font-mono text-[#8C8882]">Avatar URL</label>
             <input
               type="text"
               value={avatar}
-              onChange={(e) => setAvatar(e.target.value)}
-              className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#333333] rounded-lg text-[#F5F0E8] font-mono text-sm focus:outline-none focus:border-[#E8A020] transition-colors"
+              onChange={(event) => setAvatar(event.target.value)}
+              className="w-full rounded-lg border border-[#333333] bg-[#1a1a1a] px-4 py-3 font-mono text-sm text-[#F5F0E8] transition-colors focus:border-[#E8A020] focus:outline-none"
             />
           </div>
         </div>
       </div>
 
-      <div className="bg-[#111111] border border-[#222222] rounded-2xl p-6 mb-6">
-        <h2 className="font-heading text-lg font-semibold mb-4">Preferences</h2>
+      <div className="mb-6 rounded-2xl border border-[#222222] bg-[#111111] p-6">
+        <h2 className="mb-4 font-heading text-lg font-semibold">Preferences</h2>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-mono text-[#8C8882] mb-2">Theme</label>
+            <label className="mb-2 block text-sm font-mono text-[#8C8882]">Theme</label>
             <select
               value={settings.theme}
-              onChange={(e) => setSettings({ ...settings, theme: e.target.value })}
-              className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#333333] rounded-lg text-[#F5F0E8] font-mono text-sm focus:outline-none focus:border-[#E8A020] transition-colors"
+              onChange={(event) => setSettings({ ...settings, theme: event.target.value })}
+              className="w-full rounded-lg border border-[#333333] bg-[#1a1a1a] px-4 py-3 font-mono text-sm text-[#F5F0E8] transition-colors focus:border-[#E8A020] focus:outline-none"
             >
               <option value="dark">Dark</option>
               <option value="light">Light</option>
@@ -104,9 +109,9 @@ export default function ProfileEditor({ email, displayName, avatarUrl, settings:
             <span className="text-sm font-mono text-[#F5F0E8]">Notifications</span>
             <button
               onClick={() => setSettings({ ...settings, notifications: !settings.notifications })}
-              className={`w-12 h-6 rounded-full transition-colors ${settings.notifications ? 'bg-[#E8A020]' : 'bg-[#333333]'}`}
+              className={`h-6 w-12 rounded-full transition-colors ${settings.notifications ? 'bg-[#E8A020]' : 'bg-[#333333]'}`}
             >
-              <div className={`w-5 h-5 bg-white rounded-full transition-transform ${settings.notifications ? 'translate-x-6' : 'translate-x-0.5'}`} />
+              <div className={`h-5 w-5 rounded-full bg-white transition-transform ${settings.notifications ? 'translate-x-6' : 'translate-x-0.5'}`} />
             </button>
           </div>
 
@@ -114,22 +119,22 @@ export default function ProfileEditor({ email, displayName, avatarUrl, settings:
             <span className="text-sm font-mono text-[#F5F0E8]">Compact Mode</span>
             <button
               onClick={() => setSettings({ ...settings, compactMode: !settings.compactMode })}
-              className={`w-12 h-6 rounded-full transition-colors ${settings.compactMode ? 'bg-[#E8A020]' : 'bg-[#333333]'}`}
+              className={`h-6 w-12 rounded-full transition-colors ${settings.compactMode ? 'bg-[#E8A020]' : 'bg-[#333333]'}`}
             >
-              <div className={`w-5 h-5 bg-white rounded-full transition-transform ${settings.compactMode ? 'translate-x-6' : 'translate-x-0.5'}`} />
+              <div className={`h-5 w-5 rounded-full bg-white transition-transform ${settings.compactMode ? 'translate-x-6' : 'translate-x-0.5'}`} />
             </button>
           </div>
 
           <div>
-            <label className="block text-sm font-mono text-[#8C8882] mb-2">Language</label>
+            <label className="mb-2 block text-sm font-mono text-[#8C8882]">Language</label>
             <select
               value={settings.language}
-              onChange={(e) => setSettings({ ...settings, language: e.target.value })}
-              className="w-full px-4 py-3 bg-[#1a1a1a] border border-[#333333] rounded-lg text-[#F5F0E8] font-mono text-sm focus:outline-none focus:border-[#E8A020] transition-colors"
+              onChange={(event) => setSettings({ ...settings, language: event.target.value })}
+              className="w-full rounded-lg border border-[#333333] bg-[#1a1a1a] px-4 py-3 font-mono text-sm text-[#F5F0E8] transition-colors focus:border-[#E8A020] focus:outline-none"
             >
               <option value="en">English</option>
-              <option value="es">Español</option>
-              <option value="fr">Français</option>
+              <option value="es">Espanol</option>
+              <option value="fr">Francais</option>
               <option value="de">Deutsch</option>
             </select>
           </div>
@@ -137,7 +142,7 @@ export default function ProfileEditor({ email, displayName, avatarUrl, settings:
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+        <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-400">
           {error}
         </div>
       )}
@@ -146,11 +151,11 @@ export default function ProfileEditor({ email, displayName, avatarUrl, settings:
         <button
           onClick={handleSave}
           disabled={saving}
-          className="px-6 py-3 bg-[#E8A020] hover:bg-[#d4911a] disabled:opacity-50 text-[#0a0a0a] font-mono text-sm font-semibold rounded-lg transition-colors"
+          className="rounded-lg bg-[#E8A020] px-6 py-3 font-mono text-sm font-semibold text-[#0a0a0a] transition-colors hover:bg-[#d4911a] disabled:opacity-50"
         >
           {saving ? 'Saving...' : 'Save Changes'}
         </button>
-        {saved && <span className="text-green-400 font-mono text-sm">✓ Saved!</span>}
+        {saved && <span className="font-mono text-sm text-green-400">Saved.</span>}
       </div>
     </>
   );

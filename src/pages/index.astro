@@ -1,8 +1,13 @@
 ---
-import Layout from '../layouts/Layout.astro';
-import GraphNavPage from '../components/pages/GraphNavPage';
+import HomePage from '../components/home/HomePage';
+import AppLayout from '../layouts/AppLayout.astro';
 ---
 
-<Layout title="cl1nical — Navigate">
-  <GraphNavPage client:only="react" />
-</Layout>
+<AppLayout
+  title="cl1nical | Interactive Systems"
+  description="A cinematic landing experience for secure identity, civic intelligence, and personal control."
+  bodyStyle="--page-bg: #050816; --page-fg: #f7f8fc;"
+  showNoise={true}
+>
+  <HomePage client:load />
+</AppLayout>

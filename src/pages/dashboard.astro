@@ -1,5 +1,6 @@
 ---
 import AppLayout from '../layouts/AppLayout.astro';
+import { getProfileByUser } from '../lib/profile';
 import { createServerClient } from '../lib/supabase';
 
 const supabase = createServerClient(Astro.cookies);
@@ -9,81 +10,142 @@ if (!user) {
   return Astro.redirect('/login');
 }
 
-const { data: profile } = await supabase
-  .from('profiles')
-  .select('*')
-  .eq('id', user.id)
-  .single();
+const { profile, missingProfilesTable } = await getProfileByUser(supabase, user);
+const profileSettings = (profile?.settings ?? {}) as { theme?: string; notifications?: boolean };
 
 const displayName = profile?.display_name?.trim() || user.email?.split('@')[0] || 'User';
+const theme = typeof profileSettings.theme === 'string' ? profileSettings.theme : 'dark';
+const notificationsEnabled = profileSettings.notifications === false ? 'Muted' : 'Enabled';
+const workspaceCards = [
+  {
+    href: '/elections',
+    eyebrow: 'Signal',
+    title: 'Election Tracker',
+    body: 'Accurate state geometry, hover data, and race drill-downs across the latest election surface.',
+    accent: 'from-[#6795ff]/20 to-transparent',
+  },
+  {
+    href: '/profile',
+    eyebrow: 'Identity',
+    title: 'Profile Controls',
+    body: 'Account settings, display identity, and saved preferences flowing through Supabase.',
+    accent: 'from-[#ffbe73]/20 to-transparent',
+  },
+  {
+    href: '/tasks',
+    eyebrow: 'Utility',
+    title: 'Tasks',
+    body: 'Local productivity tools kept lightweight for daily use inside the same product shell.',
+    accent: 'from-emerald-400/20 to-transparent',
+  },
+  {
+    href: '/graph-nav',
+    eyebrow: 'Explore',
+    title: 'Graph Navigator',
+    body: 'The original spatial route explorer remains available as a secondary discovery surface.',
+    accent: 'from-white/15 to-transparent',
+  },
+];
 ---
 
-<AppLayout title="Dashboard | cl1nical" description="Your cl1nical dashboard" showNoise={true}>
-  <nav class="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
-    <a href="/" class="font-heading text-2xl font-semibold text-[var(--text-cream)]">cl1nical</a>
-    <div class="flex items-center gap-5 text-sm text-white/60">
-      <a href="/profile" class="transition hover:text-white">Profile</a>
-      <a href="/elections" class="transition hover:text-white">Elections</a>
-      <form action="/api/logout" method="POST">
-        <button type="submit" class="font-medium text-red-300 transition hover:text-red-200">Logout</button>
-      </form>
-    </div>
-  </nav>
+<AppLayout title="Dashboard | cl1nical" description="Your cl1nical dashboard" showNoise={true} bodyStyle="--page-bg: #060913; --page-fg: #f7f8fc;">
+  <div class="relative">
+    <div class="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top,_rgba(88,120,255,0.24),_transparent_30%),radial-gradient(circle_at_80%_10%,_rgba(255,190,115,0.14),_transparent_22%),linear-gradient(180deg,#060913_0%,#091121_38%,#050811_100%)]"></div>
 
-  <main class="mx-auto max-w-6xl px-6 pb-16 pt-6">
-    <section class="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-      <div class="rounded-[32px] border border-white/10 bg-white/6 p-8 shadow-[0_30px_90px_rgba(0,0,0,0.35)] backdrop-blur-xl">
-        <p class="text-xs uppercase tracking-[0.22em] text-white/40">Dashboard</p>
-        <h1 class="mt-4 font-heading text-5xl leading-none text-[var(--text-cream)]">Welcome back, {displayName}</h1>
-        <p class="mt-4 max-w-xl text-base text-white/60">{user.email}</p>
-
-        <div class="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <a href="/tasks" class="rounded-3xl border border-white/10 bg-black/20 p-5 transition hover:border-[var(--accent-amber)] hover:bg-black/30">
-            <p class="text-xs uppercase tracking-[0.18em] text-white/40">Utility</p>
-            <h2 class="mt-3 font-heading text-2xl text-[var(--text-cream)]">Tasks</h2>
-            <p class="mt-2 text-sm text-white/55">Quick local task tracking with instant persistence.</p>
-          </a>
-
-          <a href="/bookmarks" class="rounded-3xl border border-white/10 bg-black/20 p-5 transition hover:border-[var(--accent-blue)] hover:bg-black/30">
-            <p class="text-xs uppercase tracking-[0.18em] text-white/40">Utility</p>
-            <h2 class="mt-3 font-heading text-2xl text-[var(--text-cream)]">Bookmarks</h2>
-            <p class="mt-2 text-sm text-white/55">Save links without leaving the dashboard flow.</p>
-          </a>
-
-          <a href="/passwords" class="rounded-3xl border border-white/10 bg-black/20 p-5 transition hover:border-emerald-400 hover:bg-black/30">
-            <p class="text-xs uppercase tracking-[0.18em] text-white/40">Security</p>
-            <h2 class="mt-3 font-heading text-2xl text-[var(--text-cream)]">Passwords</h2>
-            <p class="mt-2 text-sm text-white/55">Generate strong passwords with a fast visual score.</p>
-          </a>
-
-          <a href="/graph-nav" class="rounded-3xl border border-white/10 bg-black/20 p-5 transition hover:border-white/30 hover:bg-black/30">
-            <p class="text-xs uppercase tracking-[0.18em] text-white/40">Explore</p>
-            <h2 class="mt-3 font-heading text-2xl text-[var(--text-cream)]">Graph Nav</h2>
-            <p class="mt-2 text-sm text-white/55">Jump through the site from the interactive node map.</p>
-          </a>
-        </div>
+    <nav class="relative z-10 mx-auto flex w-full max-w-7xl items-center justify-between px-6 py-6">
+      <a href="/" class="font-heading text-2xl font-semibold text-white">cl1nical</a>
+      <div class="flex items-center gap-5 text-sm text-white/60">
+        <a href="/profile" class="transition hover:text-white">Profile</a>
+        <a href="/elections" class="transition hover:text-white">Elections</a>
+        <form action="/api/logout" method="POST">
+          <button type="submit" class="rounded-full border border-white/12 bg-white/6 px-4 py-2 font-medium text-white transition hover:border-white/30 hover:bg-white/10">
+            Logout
+          </button>
+        </form>
       </div>
+    </nav>
 
-      <aside class="rounded-[32px] border border-white/10 bg-black/25 p-8">
-        <p class="text-xs uppercase tracking-[0.22em] text-white/40">Account</p>
-        <div class="mt-6 space-y-6">
+    <main class="relative z-10 mx-auto max-w-7xl px-6 pb-20 pt-4">
+      <section class="overflow-hidden rounded-[2.4rem] border border-white/10 bg-white/[0.04] p-8 shadow-[0_40px_140px_rgba(0,0,0,0.45)] backdrop-blur-xl lg:p-10">
+        <div class="grid gap-10 lg:grid-cols-[1.15fr_0.85fr]">
           <div>
-            <p class="text-sm text-white/40">Display name</p>
-            <p class="mt-1 text-xl text-[var(--text-cream)]">{displayName}</p>
+            <p class="text-[11px] uppercase tracking-[0.24em] text-[#95b4ff]">Command deck</p>
+            <h1 class="mt-5 max-w-3xl font-heading text-5xl leading-none tracking-[-0.05em] text-white sm:text-6xl">
+              Welcome back, {displayName}
+            </h1>
+            <p class="mt-5 max-w-2xl text-base leading-7 text-white/62">
+              Your authenticated workspace now sits inside the same premium system language as the public landing experience,
+              with secure session handling and direct access to every active module.
+            </p>
+
+            <div class="mt-8 flex flex-wrap gap-3">
+              <a href="/elections" class="inline-flex rounded-full bg-[linear-gradient(135deg,#f0b45f_0%,#ffd89b_100%)] px-5 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-slate-950 shadow-[0_20px_60px_rgba(240,180,95,0.32)] transition hover:brightness-105">
+                Election tracker
+              </a>
+              <a href="/profile" class="inline-flex rounded-full border border-white/12 bg-white/6 px-5 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-white transition hover:border-white/25 hover:bg-white/10">
+                Edit profile
+              </a>
+            </div>
+
+            <div class="mt-10 grid gap-4 md:grid-cols-3">
+              <div class="rounded-[1.8rem] border border-white/10 bg-black/20 p-5">
+                <p class="text-[10px] uppercase tracking-[0.2em] text-white/38">Identity</p>
+                <p class="mt-3 text-xl text-white">{displayName}</p>
+                <p class="mt-2 text-sm text-white/48">{user.email}</p>
+              </div>
+              <div class="rounded-[1.8rem] border border-white/10 bg-black/20 p-5">
+                <p class="text-[10px] uppercase tracking-[0.2em] text-white/38">Theme</p>
+                <p class="mt-3 text-xl text-white">{theme}</p>
+                <p class="mt-2 text-sm text-white/48">Stored in Supabase profile settings</p>
+              </div>
+              <div class="rounded-[1.8rem] border border-white/10 bg-black/20 p-5">
+                <p class="text-[10px] uppercase tracking-[0.2em] text-white/38">Notifications</p>
+                <p class="mt-3 text-xl text-white">{notificationsEnabled}</p>
+                <p class="mt-2 text-sm text-white/48">Server-backed preference state</p>
+              </div>
+            </div>
           </div>
-          <div>
-            <p class="text-sm text-white/40">Theme</p>
-            <p class="mt-1 text-xl text-[var(--text-cream)]">{profile?.settings?.theme ?? 'dark'}</p>
-          </div>
-          <div>
-            <p class="text-sm text-white/40">Notifications</p>
-            <p class="mt-1 text-xl text-[var(--text-cream)]">{profile?.settings?.notifications === false ? 'Muted' : 'Enabled'}</p>
-          </div>
-          <a href="/profile" class="inline-flex rounded-2xl border border-white/10 px-4 py-3 text-sm font-semibold text-[var(--text-cream)] transition hover:border-white/30 hover:bg-white/6">
-            Edit Profile
-          </a>
+
+          <aside class="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.03))] p-6">
+            <p class="text-[11px] uppercase tracking-[0.22em] text-white/42">Runtime health</p>
+            {missingProfilesTable && (
+              <div class="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                Profile storage is not provisioned in Supabase yet. Apply the latest SQL migration to enable saved preferences.
+              </div>
+            )}
+            <div class="mt-6 space-y-4">
+              <div class="rounded-[1.6rem] border border-white/10 bg-black/20 p-4">
+                <p class="text-[10px] uppercase tracking-[0.18em] text-white/38">Session mode</p>
+                <p class="mt-2 text-lg text-white">HTTP-only SSR cookies</p>
+              </div>
+              <div class="rounded-[1.6rem] border border-white/10 bg-black/20 p-4">
+                <p class="text-[10px] uppercase tracking-[0.18em] text-white/38">Route guard</p>
+                <p class="mt-2 text-lg text-white">Verified with `getUser()` in middleware</p>
+              </div>
+              <div class="rounded-[1.6rem] border border-white/10 bg-black/20 p-4">
+                <p class="text-[10px] uppercase tracking-[0.18em] text-white/38">Redirect target</p>
+                <p class="mt-2 text-lg text-white">cl1nical.dev auth confirmation flow</p>
+              </div>
+            </div>
+          </aside>
         </div>
-      </aside>
-    </section>
-  </main>
+      </section>
+
+      <section class="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        {workspaceCards.map((card) => (
+          <a
+            href={card.href}
+            class="group relative overflow-hidden rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] p-6 transition hover:-translate-y-1 hover:border-white/18"
+          >
+            <div class={`absolute inset-x-0 top-0 h-28 bg-gradient-to-b ${card.accent}`}></div>
+            <div class="relative">
+              <p class="text-[10px] uppercase tracking-[0.2em] text-white/40">{card.eyebrow}</p>
+              <h2 class="mt-4 font-heading text-3xl tracking-[-0.04em] text-white">{card.title}</h2>
+              <p class="mt-4 text-sm leading-6 text-white/58">{card.body}</p>
+            </div>
+          </a>
+        ))}
+      </section>
+    </main>
+  </div>
 </AppLayout>

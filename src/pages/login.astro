@@ -8,6 +8,8 @@ let email = '';
 const message = Astro.url.searchParams.get('message');
 const notice = message === 'check-email'
   ? 'Check your email to confirm your account before signing in.'
+  : message === 'auth-error'
+    ? 'The verification link was invalid or expired. Request a fresh sign-in or registration email.'
   : '';
 
 if (Astro.request.method === 'POST') {
