@@ -1,69 +1,89 @@
 ---
+import AppLayout from '../layouts/AppLayout.astro';
 import { createServerClient } from '../lib/supabase';
 
-const supabase = createServerClient({
-  get: (name) => Astro.cookies.get(name)?.value,
-  set: (name, value, options) => Astro.cookies.set(name, value, options),
-  remove: (name, options) => Astro.cookies.delete(name, options),
-});
+const supabase = createServerClient(Astro.cookies);
+const { data: { user } } = await supabase.auth.getUser();
 
-const { data: { session } } = await supabase.auth.getSession();
-
-if (!session) {
+if (!user) {
   return Astro.redirect('/login');
 }
 
 const { data: profile } = await supabase
   .from('profiles')
   .select('*')
-  .eq('id', session.user.id)
+  .eq('id', user.id)
   .single();
 
-const displayName = profile?.display_name ?? session.user.email?.split('@')[0] ?? 'User';
+const displayName = profile?.display_name?.trim() || user.email?.split('@')[0] || 'User';
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Dashboard — cl1nical</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  </head>
-  <body class="min-h-screen bg-[#0a0a0a] text-[#F5F0E8]">
-    <nav class="border-b border-[#222222] px-6 py-4 flex items-center justify-between">
-      <a href="/" class="font-heading text-xl font-semibold">cl1nical</a>
-      <div class="flex items-center gap-4">
-        <a href="/profile" class="font-mono text-sm text-[#8C8882] hover:text-[#F5F0E8] transition-colors">Profile</a>
-        <form action="/api/logout" method="POST">
-          <button type="submit" class="font-mono text-sm text-red-400 hover:text-red-300 transition-colors">Logout</button>
-        </form>
+<AppLayout title="Dashboard | cl1nical" description="Your cl1nical dashboard" showNoise={true}>
+  <nav class="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
+    <a href="/" class="font-heading text-2xl font-semibold text-[var(--text-cream)]">cl1nical</a>
+    <div class="flex items-center gap-5 text-sm text-white/60">
+      <a href="/profile" class="transition hover:text-white">Profile</a>
+      <a href="/elections" class="transition hover:text-white">Elections</a>
+      <form action="/api/logout" method="POST">
+        <button type="submit" class="font-medium text-red-300 transition hover:text-red-200">Logout</button>
+      </form>
+    </div>
+  </nav>
+
+  <main class="mx-auto max-w-6xl px-6 pb-16 pt-6">
+    <section class="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+      <div class="rounded-[32px] border border-white/10 bg-white/6 p-8 shadow-[0_30px_90px_rgba(0,0,0,0.35)] backdrop-blur-xl">
+        <p class="text-xs uppercase tracking-[0.22em] text-white/40">Dashboard</p>
+        <h1 class="mt-4 font-heading text-5xl leading-none text-[var(--text-cream)]">Welcome back, {displayName}</h1>
+        <p class="mt-4 max-w-xl text-base text-white/60">{user.email}</p>
+
+        <div class="mt-10 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <a href="/tasks" class="rounded-3xl border border-white/10 bg-black/20 p-5 transition hover:border-[var(--accent-amber)] hover:bg-black/30">
+            <p class="text-xs uppercase tracking-[0.18em] text-white/40">Utility</p>
+            <h2 class="mt-3 font-heading text-2xl text-[var(--text-cream)]">Tasks</h2>
+            <p class="mt-2 text-sm text-white/55">Quick local task tracking with instant persistence.</p>
+          </a>
+
+          <a href="/bookmarks" class="rounded-3xl border border-white/10 bg-black/20 p-5 transition hover:border-[var(--accent-blue)] hover:bg-black/30">
+            <p class="text-xs uppercase tracking-[0.18em] text-white/40">Utility</p>
+            <h2 class="mt-3 font-heading text-2xl text-[var(--text-cream)]">Bookmarks</h2>
+            <p class="mt-2 text-sm text-white/55">Save links without leaving the dashboard flow.</p>
+          </a>
+
+          <a href="/passwords" class="rounded-3xl border border-white/10 bg-black/20 p-5 transition hover:border-emerald-400 hover:bg-black/30">
+            <p class="text-xs uppercase tracking-[0.18em] text-white/40">Security</p>
+            <h2 class="mt-3 font-heading text-2xl text-[var(--text-cream)]">Passwords</h2>
+            <p class="mt-2 text-sm text-white/55">Generate strong passwords with a fast visual score.</p>
+          </a>
+
+          <a href="/graph-nav" class="rounded-3xl border border-white/10 bg-black/20 p-5 transition hover:border-white/30 hover:bg-black/30">
+            <p class="text-xs uppercase tracking-[0.18em] text-white/40">Explore</p>
+            <h2 class="mt-3 font-heading text-2xl text-[var(--text-cream)]">Graph Nav</h2>
+            <p class="mt-2 text-sm text-white/55">Jump through the site from the interactive node map.</p>
+          </a>
+        </div>
       </div>
-    </nav>
 
-    <main class="max-w-6xl mx-auto px-6 py-12">
-      <h1 class="font-heading text-4xl font-semibold mb-2">Welcome back, {displayName}</h1>
-      <p class="text-[#8C8882] font-mono text-sm mb-12">{session.user.email}</p>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <a href="/tasks" class="group block p-6 bg-[#111111] border border-[#222222] rounded-2xl hover:border-[#E8A020] transition-colors">
-          <div class="text-2xl mb-3">📋</div>
-          <h3 class="font-heading text-lg font-semibold mb-1 group-hover:text-[#E8A020] transition-colors">Tasks</h3>
-          <p class="text-[#8C8882] text-sm font-mono">Manage your todo list</p>
-        </a>
-
-        <a href="/bookmarks" class="group block p-6 bg-[#111111] border border-[#222222] rounded-2xl hover:border-[#2D5BE3] transition-colors">
-          <div class="text-2xl mb-3">🔖</div>
-          <h3 class="font-heading text-lg font-semibold mb-1 group-hover:text-[#2D5BE3] transition-colors">Bookmarks</h3>
-          <p class="text-[#8C8882] text-sm font-mono">Save important links</p>
-        </a>
-
-        <a href="/passwords" class="group block p-6 bg-[#111111] border border-[#222222] rounded-2xl hover:border-[#22C55E] transition-colors">
-          <div class="text-2xl mb-3">🔐</div>
-          <h3 class="font-heading text-lg font-semibold mb-1 group-hover:text-[#22C55E] transition-colors">Passwords</h3>
-          <p class="text-[#8C8882] text-sm font-mono">Generate secure passwords</p>
-        </a>
-      </div>
-    </main>
-  </body>
-</html>
+      <aside class="rounded-[32px] border border-white/10 bg-black/25 p-8">
+        <p class="text-xs uppercase tracking-[0.22em] text-white/40">Account</p>
+        <div class="mt-6 space-y-6">
+          <div>
+            <p class="text-sm text-white/40">Display name</p>
+            <p class="mt-1 text-xl text-[var(--text-cream)]">{displayName}</p>
+          </div>
+          <div>
+            <p class="text-sm text-white/40">Theme</p>
+            <p class="mt-1 text-xl text-[var(--text-cream)]">{profile?.settings?.theme ?? 'dark'}</p>
+          </div>
+          <div>
+            <p class="text-sm text-white/40">Notifications</p>
+            <p class="mt-1 text-xl text-[var(--text-cream)]">{profile?.settings?.notifications === false ? 'Muted' : 'Enabled'}</p>
+          </div>
+          <a href="/profile" class="inline-flex rounded-2xl border border-white/10 px-4 py-3 text-sm font-semibold text-[var(--text-cream)] transition hover:border-white/30 hover:bg-white/6">
+            Edit Profile
+          </a>
+        </div>
+      </aside>
+    </section>
+  </main>
+</AppLayout>

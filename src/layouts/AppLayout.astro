@@ -1,0 +1,37 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  description?: string;
+  bodyClass?: string;
+  bodyStyle?: string;
+  showNoise?: boolean;
+  theme?: 'dark' | 'light';
+}
+
+const {
+  title,
+  description = 'cl1nical',
+  bodyClass = '',
+  bodyStyle = '',
+  showNoise = false,
+  theme = 'dark',
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="en" class:list={['scroll-smooth', theme === 'dark' ? 'theme-dark' : 'theme-light']} data-theme={theme}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="color-scheme" content={theme} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title}</title>
+  </head>
+  <body class:list={['antialiased', theme === 'dark' ? 'theme-dark' : 'theme-light', bodyClass]} style={bodyStyle}>
+    {showNoise && <div class="noise-overlay"></div>}
+    <slot />
+  </body>
+</html>

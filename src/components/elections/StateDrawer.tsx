@@ -1,101 +1,114 @@
-// @ts-nocheck
-import { RACE_RATINGS, PARTIES, races } from '../../data/elections';
+import { PARTIES, RACE_RATINGS } from '../../data/elections';
+import { getStateSummary, getTrackedStateRaces } from '../../lib/election-states';
 
-export default function StateDrawer({ stateAbbr, onClose, onViewRace }) {
-  const stateName = Object.entries({
-    AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California',
-    CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware', FL: 'Florida', GA: 'Georgia',
-    HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois', IN: 'Indiana', IA: 'Iowa',
-    KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana', ME: 'Maine', MD: 'Maryland',
-    MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota', MS: 'Mississippi',
-    MO: 'Missouri', MT: 'Montana', NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire',
-    NJ: 'New Jersey', NM: 'New Mexico', NY: 'New York', NC: 'North Carolina',
-    ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania',
-    RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota', TN: 'Tennessee',
-    TX: 'Texas', UT: 'Utah', VT: 'Vermont', VA: 'Virginia', WA: 'Washington',
-    WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming', DC: 'District of Columbia',
-  }).find(([k]) => k === stateAbbr)?.[1] || stateAbbr;
+type StateDrawerProps = {
+  stateAbbr: string;
+  onClose: () => void;
+  onViewRace: (id: string) => void;
+};
 
-  const stateRaces = races.filter(r => r.state === stateName);
-  const overallRating = stateRaces.length > 0
-    ? stateRaces.reduce((a, b) => {
-        const w = { SAFE_D: 7, LIKELY_D: 6, LEAN_D: 5, TOSS_UP: 4, LEAN_R: 3, LIKELY_R: 2, SAFE_R: 1 };
-        return (w[a.rating] || 4) > (w[b.rating] || 4) ? a : b;
-      }).rating
-    : null;
+export default function StateDrawer({ stateAbbr, onClose, onViewRace }: StateDrawerProps) {
+  const summary = getStateSummary(stateAbbr);
+  const stateRaces = getTrackedStateRaces(stateAbbr);
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/20 z-40" onClick={onClose} />
-      <div className="fixed top-0 right-0 bottom-0 w-[380px] bg-white border-l border-[#e2e2e2] z-50 overflow-y-auto" style={{ animation: 'slideIn 200ms ease-out' }}>
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-6">
+      <div className="fixed inset-0 z-40 bg-slate-950/30 backdrop-blur-[1px]" onClick={onClose} />
+      <aside className="fixed inset-y-0 right-0 z-50 w-full max-w-md overflow-y-auto border-l border-slate-200 bg-white shadow-2xl" style={{ animation: 'slideIn 180ms ease-out' }}>
+        <div className="p-6 sm:p-8">
+          <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-xl font-bold text-[#0f0f0f]">{stateName}</h2>
-              {overallRating && (
-                <span className="inline-block mt-1 text-xs font-semibold px-2 py-0.5 rounded" style={{ backgroundColor: RACE_RATINGS[overallRating].bg + '20', color: RACE_RATINGS[overallRating].color }}>
-                  {RACE_RATINGS[overallRating].label}
-                </span>
-              )}
+              <p className="text-xs uppercase tracking-[0.22em] text-slate-400">{summary.abbr}</p>
+              <h2 className="mt-2 text-2xl font-bold text-slate-950">{summary.name}</h2>
+              <span className="mt-3 inline-flex rounded-full px-3 py-1 text-xs font-semibold" style={{ backgroundColor: `${summary.fill}20`, color: summary.fill }}>
+                {summary.ratingLabel}
+              </span>
             </div>
-            <button onClick={onClose} className="text-[#666] hover:text-[#0f0f0f] text-2xl leading-none">&times;</button>
+            <button onClick={onClose} className="rounded-full border border-slate-200 px-3 py-1 text-sm text-slate-500 transition hover:border-slate-300 hover:text-slate-900">
+              Close
+            </button>
           </div>
 
+          <div className="mt-6 grid grid-cols-3 gap-3">
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Electoral Votes</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-950">{summary.electoralVotes}</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Map Lean</p>
+              <p className="mt-2 text-lg font-semibold text-slate-950">{summary.ratingLabel}</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 p-4">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-400">Tracked Races</p>
+              <p className="mt-2 text-2xl font-semibold text-slate-950">{stateRaces.length}</p>
+            </div>
+          </div>
+
+          <p className="mt-6 text-sm leading-6 text-slate-600">{summary.headline}</p>
+
           {stateRaces.length === 0 ? (
-            <p className="text-sm text-[#666]">No races tracked for this state.</p>
+            <div className="mt-8 rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-600">
+              No statewide races are tracked for this state in the current dataset. The map color falls back to a partisan lean placeholder so every state still renders with meaningful data.
+            </div>
           ) : (
-            <div className="space-y-3">
-              {stateRaces.map(race => {
+            <div className="mt-8 space-y-4">
+              {stateRaces.map((race) => {
                 const rating = RACE_RATINGS[race.rating];
-                const leader = race.candidates.reduce((a, b) => a.polling > b.polling ? a : b);
+                const leader = race.candidates.reduce((currentLeader, candidate) => (
+                  candidate.polling > currentLeader.polling ? candidate : currentLeader
+                ));
+
                 return (
-                  <div key={race.id} className="border border-[#e2e2e2] rounded p-4 hover:bg-[#f8f8f8] transition-colors">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-semibold text-[#666] uppercase tracking-wide">{race.type}</span>
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded" style={{ backgroundColor: rating.bg + '20', color: rating.color }}>
+                  <article key={race.id} className="rounded-3xl border border-slate-200 p-5 transition hover:border-slate-300 hover:bg-slate-50">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.18em] text-slate-400">{race.type}</p>
+                        <h3 className="mt-2 text-lg font-semibold text-slate-950">{race.district || race.state}</h3>
+                      </div>
+                      <span className="rounded-full px-2.5 py-1 text-xs font-semibold" style={{ backgroundColor: `${rating.bg}20`, color: rating.color }}>
                         {rating.label}
                       </span>
                     </div>
-                    {race.candidates.map((c, i) => {
-                      const party = PARTIES[c.party];
-                      const isLeader = c.name === leader.name;
-                      const prevPoll = c.trend?.[c.trend.length - 2];
-                      const trend = prevPoll ? c.polling - prevPoll : 0;
-                      return (
-                        <div key={i} className="flex items-center justify-between py-1">
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: party.color }} />
-                            <span className={`text-sm ${isLeader ? 'font-semibold text-[#0f0f0f]' : 'text-[#666]'}`}>{c.name}</span>
-                            {trend !== 0 && (
-                              <span className={`text-xs ${trend > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                {trend > 0 ? '↑' : '↓'}{Math.abs(trend).toFixed(1)}
-                              </span>
-                            )}
+
+                    <div className="mt-4 space-y-3">
+                      {race.candidates.map((candidate) => {
+                        const party = PARTIES[candidate.party];
+                        const previous = candidate.trend?.[candidate.trend.length - 2];
+                        const delta = typeof previous === 'number' ? candidate.polling - previous : 0;
+                        const isLeader = leader.name === candidate.name;
+
+                        return (
+                          <div key={candidate.name} className="flex items-center justify-between gap-4">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: party.color }}></span>
+                                <span className={`truncate text-sm ${isLeader ? 'font-semibold text-slate-950' : 'text-slate-700'}`}>{candidate.name}</span>
+                              </div>
+                              <p className="mt-1 text-xs text-slate-400">
+                                {party.label}
+                                {delta !== 0 && ` | ${delta > 0 ? '+' : ''}${delta.toFixed(1)} trend`}
+                              </p>
+                            </div>
+                            <span className="text-sm font-semibold tabular-nums text-slate-950">{candidate.polling}%</span>
                           </div>
-                          <span className="text-sm font-mono font-bold tabular-nums" style={{ fontVariantNumeric: 'tabular-nums' }}>
-                            {c.polling}%
-                          </span>
-                        </div>
-                      );
-                    })}
-                    <div className="mt-3 pt-2 border-t border-[#e2e2e2] flex items-center justify-between">
-                      <span className="text-xs text-[#999]">
-                        {new Date(race.lastUpdated).toLocaleDateString()}
-                      </span>
-                      <button
-                        onClick={() => onViewRace(race.id)}
-                        className="text-xs font-semibold text-[#1a4a8a] hover:text-[#0f0f0f] transition-colors"
-                      >
-                        View Full Race →
+                        );
+                      })}
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-4">
+                      <span className="text-xs text-slate-400">{new Date(race.lastUpdated).toLocaleString()}</span>
+                      <button onClick={() => onViewRace(race.id)} className="text-sm font-semibold text-sky-700 transition hover:text-slate-950">
+                        View race
                       </button>
                     </div>
-                  </div>
+                  </article>
                 );
               })}
             </div>
           )}
         </div>
-      </div>
+      </aside>
+
       <style>{`
         @keyframes slideIn {
           from { transform: translateX(100%); }

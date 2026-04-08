@@ -1,25 +1,22 @@
+// Supabase Auth settings:
+// Auth > URL Configuration: Site URL and Redirect URLs must match this app's domain.
+// Auth > Email: disable Confirm email during development if you want register to log in immediately.
 import { defineMiddleware } from 'astro:middleware';
 import { createServerClient } from './lib/supabase';
 
-const PROTECTED = ['/dashboard', '/profile'];
-const AUTH = ['/login', '/register'];
+const PROTECTED = ['/dashboard', '/profile', '/elections'];
+const GUEST_ONLY = ['/login', '/register'];
 
 export const onRequest = defineMiddleware(async (context, next) => {
-  const path = new URL(context.request.url).pathname;
+  const path = context.url.pathname;
+  const supabase = createServerClient(context.cookies);
+  const { data: { user } } = await supabase.auth.getUser();
 
-  const supabase = createServerClient({
-    get: (name) => context.cookies.get(name)?.value,
-    set: (name, value, options) => context.cookies.set(name, value, options),
-    remove: (name, options) => context.cookies.delete(name, options),
-  });
-
-  const { data: { session } } = await supabase.auth.getSession();
-
-  if (!session && PROTECTED.some((p) => path.startsWith(p))) {
+  if (!user && PROTECTED.some((route) => path.startsWith(route))) {
     return context.redirect('/login');
   }
 
-  if (session && AUTH.some((p) => path.startsWith(p))) {
+  if (user && GUEST_ONLY.some((route) => path.startsWith(route))) {
     return context.redirect('/dashboard');
   }
 

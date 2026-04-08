@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { createBrowserClient } from '../../lib/supabase';
 
 const NAV_ITEMS = [
@@ -16,15 +16,17 @@ export default function TopNav() {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
     };
+
     window.addEventListener('scroll', handleScroll, { passive: true });
 
     const supabase = createBrowserClient();
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setLoggedIn(!!session);
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setLoggedIn(Boolean(user));
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setLoggedIn(!!session);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setLoggedIn(Boolean(user));
     });
 
     return () => {
@@ -51,7 +53,6 @@ export default function TopNav() {
         fontFamily: "'DM Mono', monospace",
       }}
     >
-      {/* Logo */}
       <a
         href="/"
         style={{
@@ -66,9 +67,8 @@ export default function TopNav() {
         cl1nical
       </a>
 
-      {/* Nav Links */}
       <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
-        {NAV_ITEMS.map(item => (
+        {NAV_ITEMS.map((item) => (
           <a
             key={item.label}
             href={item.href}
@@ -80,8 +80,8 @@ export default function TopNav() {
               textTransform: 'uppercase',
               transition: 'color 0.2s ease',
             }}
-            onMouseEnter={e => (e.target as HTMLElement).style.color = '#F5F0E8'}
-            onMouseLeave={e => (e.target as HTMLElement).style.color = 'rgba(245, 240, 232, 0.6)'}
+            onMouseEnter={(event) => (event.target as HTMLElement).style.color = '#F5F0E8'}
+            onMouseLeave={(event) => (event.target as HTMLElement).style.color = 'rgba(245, 240, 232, 0.6)'}
           >
             {item.label}
           </a>

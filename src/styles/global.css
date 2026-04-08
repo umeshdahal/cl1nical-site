@@ -1,29 +1,20 @@
-/* ============================================
-   FONT IMPORTS
-   ============================================ */
 @import url('https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap');
 
 @import "tailwindcss";
 
-/* ============================================
-   CSS CUSTOM PROPERTIES — NEW DESIGN SYSTEM
-   ============================================ */
 :root {
   --bg-dark: #0a0a0a;
-  --bg-cream: #F5F0E8;
-  --accent-amber: #E8A020;
-  --accent-blue: #2D5BE3;
-  --text-cream: #F5F0E8;
+  --bg-cream: #f5f0e8;
+  --accent-amber: #e8a020;
+  --accent-blue: #2d5be3;
+  --text-cream: #f5f0e8;
   --text-dark: #0a0a0a;
-  
   --font-heading: 'Clash Display', sans-serif;
   --font-mono: 'DM Mono', monospace;
+  color-scheme: dark;
 }
 
-/* ============================================
-   BASE RESET & GLOBAL
-   ============================================ */
 *, *::before, *::after {
   margin: 0;
   padding: 0;
@@ -31,25 +22,36 @@
 }
 
 html {
+  min-height: 100%;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+html.theme-dark,
+body.theme-dark {
+  color-scheme: dark;
+}
+
+html.theme-light,
+body.theme-light {
+  color-scheme: light;
+}
+
 body {
+  min-height: 100%;
   font-family: var(--font-mono);
-  background: var(--bg-dark);
-  color: var(--text-cream);
+  background: var(--page-bg, var(--bg-dark));
+  color: var(--page-fg, var(--text-cream));
   overflow-x: hidden;
   cursor: none;
 }
 
 @media (hover: none) and (pointer: coarse) {
-  body { cursor: auto; }
+  body {
+    cursor: auto;
+  }
 }
 
-/* ============================================
-   NOISE TEXTURE OVERLAY
-   ============================================ */
 .noise-overlay {
   position: fixed;
   inset: 0;
@@ -61,9 +63,6 @@ body {
   background-size: 256px 256px;
 }
 
-/* ============================================
-   CUSTOM CURSOR — CROSSHAIR STYLE
-   ============================================ */
 .cursor-crosshair {
   position: fixed;
   width: 16px;
@@ -101,12 +100,11 @@ body {
 }
 
 @media (hover: none) and (pointer: coarse) {
-  .cursor-crosshair { display: none; }
+  .cursor-crosshair {
+    display: none;
+  }
 }
 
-/* ============================================
-   SCROLL PROGRESS INDICATOR
-   ============================================ */
 .scroll-progress-line {
   position: fixed;
   right: 0;
@@ -119,9 +117,6 @@ body {
   transition: background-color 0.3s ease;
 }
 
-/* ============================================
-   SECTION COUNTER
-   ============================================ */
 .section-counter {
   position: fixed;
   bottom: 24px;
@@ -134,42 +129,30 @@ body {
   mix-blend-mode: difference;
 }
 
-/* ============================================
-   TYPOGRAPHY
-   ============================================ */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 600;
   letter-spacing: -0.03em;
 }
 
-/* ============================================
-   SEQUENCE CONTAINERS
-   ============================================ */
 .sequence {
   position: relative;
   width: 100%;
   will-change: transform;
 }
 
-/* ============================================
-   REDUCED MOTION
-   ============================================ */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  
+
   .sequence {
     min-height: 100vh;
   }
 }
 
-/* ============================================
-   UTILITY
-   ============================================ */
 .sr-only {
   position: absolute;
   width: 1px;

@@ -1,6 +1,7 @@
 // @ts-nocheck
-import { useState, useEffect, useMemo } from 'react';
-import { fetchRaces, fetchSeatCounts, RACE_RATINGS, RACE_TYPES } from '../../data/elections';
+import { useEffect, useMemo, useState } from 'react';
+import { fetchRaceById, fetchRaces, fetchSeatCounts, RACE_TYPES } from '../../data/elections';
+import { getStateSummary } from '../../lib/election-states';
 import Ticker from './Ticker';
 import Filters from './Filters';
 import USMap from './USMap';
@@ -18,116 +19,118 @@ export default function ElectionsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([fetchRaces(), fetchSeatCounts()]).then(([r, s]) => {
-      setRaces(r);
-      setSeatCounts(s);
+    Promise.all([fetchRaces(), fetchSeatCounts()]).then(([nextRaces, nextSeatCounts]) => {
+      setRaces(nextRaces);
+      setSeatCounts(nextSeatCounts);
       setLoading(false);
     });
   }, []);
 
   const filteredRaces = useMemo(() => {
     let result = [...races];
-    if (filters.type) result = result.filter(r => r.type === filters.type);
-    if (filters.rating) result = result.filter(r => r.rating === filters.rating);
+
+    if (filters.type) result = result.filter((race) => race.type === filters.type);
+    if (filters.rating) result = result.filter((race) => race.rating === filters.rating);
     if (filters.search) {
-      const q = filters.search.toLowerCase();
-      result = result.filter(r =>
-        r.state.toLowerCase().includes(q) ||
-        r.district?.toLowerCase().includes(q) ||
-        r.candidates.some(c => c.name.toLowerCase().includes(q))
+      const query = filters.search.toLowerCase();
+      result = result.filter((race) =>
+        race.state.toLowerCase().includes(query) ||
+        race.district?.toLowerCase().includes(query) ||
+        race.candidates.some((candidate) => candidate.name.toLowerCase().includes(query))
       );
     }
-    if (selectedState) result = result.filter(r => r.state === selectedState);
+    if (selectedState) result = result.filter((race) => race.stateAbbr === selectedState);
+
     return result;
   }, [races, filters, selectedState]);
 
   const racesByType = useMemo(() => {
     const grouped = {};
-    filteredRaces.forEach(r => {
-      if (!grouped[r.type]) grouped[r.type] = [];
-      grouped[r.type].push(r);
+    filteredRaces.forEach((race) => {
+      if (!grouped[race.type]) grouped[race.type] = [];
+      grouped[race.type].push(race);
     });
     return grouped;
   }, [filteredRaces]);
 
   const handleStateClick = (abbr) => {
-    setSelectedState(selectedState === abbr ? null : abbr);
+    setSelectedState((current) => current === abbr ? null : abbr);
   };
 
   const handleRaceClick = async (id) => {
-    const race = await fetchRaces().then(all => all.find(r => r.id === id));
+    const race = await fetchRaceById(id);
     setSelectedRace(race);
   };
 
   const totalSeats = seatCounts.dem + seatCounts.rep + seatCounts.toss;
   const demPct = totalSeats > 0 ? (seatCounts.dem / totalSeats) * 100 : 0;
+  const tossPct = totalSeats > 0 ? (seatCounts.toss / totalSeats) * 100 : 0;
   const repPct = totalSeats > 0 ? (seatCounts.rep / totalSeats) * 100 : 0;
+  const selectedStateSummary = selectedState ? getStateSummary(selectedState) : null;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-[#0f0f0f] font-mono text-sm">Loading election data...</div>
+      <div className="flex min-h-screen items-center justify-center bg-stone-100">
+        <div className="text-sm font-mono text-slate-600">Loading election data...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white text-[#0f0f0f]" style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
+    <div className="min-h-screen bg-stone-100 text-slate-950" style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
       <Ticker />
 
-      {/* Header */}
-      <header className="border-b border-[#e2e2e2] px-6 py-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-4">
+      <header className="border-b border-slate-200 bg-white/90 px-6 py-4 backdrop-blur">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-4 flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold tracking-tight">2026 Election Tracker</h1>
-              <p className="text-sm text-[#666] mt-0.5">Real-time race ratings and polling data</p>
+              <p className="mt-0.5 text-sm text-slate-500">Responsive state map, live-style race ratings, and drill-down panels.</p>
             </div>
-            <a href="/" className="text-sm font-semibold text-[#0f0f0f] hover:text-[#666] transition-colors">
-              cl1nical
+            <a href="/dashboard" className="text-sm font-semibold text-slate-900 transition hover:text-slate-600">
+              Dashboard
             </a>
           </div>
 
-          {/* Seat Count Bar */}
           <div className="mb-4">
-            <div className="flex items-center gap-4 mb-2">
+            <div className="mb-2 flex items-center gap-4">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-semibold text-[#1a4a8a]">DEM</span>
                 <span className="text-sm font-mono font-bold tabular-nums">{seatCounts.dem}</span>
               </div>
-              <div className="flex-1 h-3 bg-[#e2e2e2] rounded-[2px] overflow-hidden flex">
+              <div className="flex h-3 flex-1 overflow-hidden rounded-[2px] bg-slate-200">
                 <div className="h-full bg-[#1a4a8a] transition-all" style={{ width: `${demPct}%` }} />
-                <div className="h-full bg-[#e8a838] transition-all" style={{ width: `${(seatCounts.toss / totalSeats) * 100}%` }} />
+                <div className="h-full bg-[#e8a838] transition-all" style={{ width: `${tossPct}%` }} />
                 <div className="h-full bg-[#8a1a1a] transition-all" style={{ width: `${repPct}%` }} />
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-mono font-bold tabular-nums">{seatCounts.rep}</span>
                 <span className="text-xs font-semibold text-[#8a1a1a]">REP</span>
               </div>
-              <div className="text-xs text-[#999] font-mono">
-                51 to control
-              </div>
+              <div className="text-xs font-mono text-slate-500">51 to control</div>
             </div>
-            <div className="flex items-center gap-4 text-xs text-[#666]">
-              <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#1a4a8a] rounded-[1px]" /> Democrat</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#e8a838] rounded-[1px]" /> Toss-up</span>
-              <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#8a1a1a] rounded-[1px]" /> Republican</span>
+            <div className="flex items-center gap-4 text-xs text-slate-500">
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-[1px] bg-[#1a4a8a]" /> Democrat</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-[1px] bg-[#e8a838]" /> Toss-up</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-[1px] bg-[#8a1a1a]" /> Republican</span>
             </div>
           </div>
 
-          {/* Tab Navigation */}
           <div className="flex gap-1">
             {[
               { key: 'map', label: 'Map' },
               { key: 'races', label: 'All Races' },
-            ].map(tab => (
+            ].map((tab) => (
               <button
                 key={tab.key}
-                onClick={() => { setActiveTab(tab.key); setSelectedState(null); }}
-                className={`px-4 py-1.5 text-xs font-semibold rounded-[2px] transition-colors ${
+                onClick={() => {
+                  setActiveTab(tab.key);
+                  setSelectedState(null);
+                }}
+                className={`rounded-[2px] px-4 py-1.5 text-xs font-semibold transition-colors ${
                   activeTab === tab.key
-                    ? 'bg-[#0f0f0f] text-white'
-                    : 'bg-white text-[#666] border border-[#e2e2e2] hover:border-[#999]'
+                    ? 'bg-slate-950 text-white'
+                    : 'border border-slate-200 bg-white text-slate-500 hover:border-slate-400'
                 }`}
               >
                 {tab.label}
@@ -137,24 +140,21 @@ export default function ElectionsPage() {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-6">
+      <main className="mx-auto max-w-7xl px-6 py-6">
         <Filters filters={filters} setFilters={setFilters} />
 
         {activeTab === 'map' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
-              <div className="bg-white border border-[#e2e2e2] rounded-[2px] p-4">
+              <div className="rounded-[28px] border border-slate-200 bg-white p-4 shadow-sm">
                 <USMap onStateClick={handleStateClick} selectedState={selectedState} />
-                {selectedState && (
-                  <div className="mt-4 flex items-center justify-between pt-3 border-t border-[#e2e2e2]">
-                    <span className="text-sm font-semibold text-[#0f0f0f]">
-                      {selectedState}
-                    </span>
-                    <button
-                      onClick={() => setSelectedState(null)}
-                      className="text-xs font-semibold text-[#1a4a8a] hover:text-[#0f0f0f] transition-colors"
-                    >
+                {selectedStateSummary && (
+                  <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-3">
+                    <div>
+                      <span className="text-sm font-semibold text-slate-950">{selectedStateSummary.name}</span>
+                      <p className="mt-0.5 text-xs text-slate-500">{selectedStateSummary.headline}</p>
+                    </div>
+                    <button onClick={() => setSelectedState(null)} className="text-xs font-semibold text-sky-700 transition hover:text-slate-950">
                       Clear
                     </button>
                   </div>
@@ -163,13 +163,13 @@ export default function ElectionsPage() {
             </div>
 
             <div className="space-y-3">
-              <h3 className="text-xs font-semibold text-[#666] uppercase tracking-wide">
-                {selectedState ? `${selectedState} Races` : 'Toss-up Races'}
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {selectedStateSummary ? `${selectedStateSummary.name} Races` : 'Toss-up Races'}
               </h3>
-              {(selectedState
-                ? filteredRaces.filter(r => r.state === selectedState)
-                : filteredRaces.filter(r => r.rating === 'TOSS_UP')
-              ).map(race => (
+              {(selectedStateSummary
+                ? filteredRaces.filter((race) => race.stateAbbr === selectedState)
+                : filteredRaces.filter((race) => race.rating === 'TOSS_UP')
+              ).map((race) => (
                 <RaceCard key={race.id} race={race} onClick={handleRaceClick} />
               ))}
             </div>
@@ -178,14 +178,15 @@ export default function ElectionsPage() {
 
         {activeTab === 'races' && (
           <div className="space-y-8">
-            {RACE_TYPES.map(type => {
+            {RACE_TYPES.map((type) => {
               const typeRaces = racesByType[type];
               if (!typeRaces || typeRaces.length === 0) return null;
+
               return (
                 <div key={type}>
-                  <h3 className="text-xs font-semibold text-[#666] uppercase tracking-wide mb-3">{type} ({typeRaces.length})</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {typeRaces.map(race => (
+                  <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">{type} ({typeRaces.length})</h3>
+                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+                    {typeRaces.map((race) => (
                       <RaceCard key={race.id} race={race} onClick={handleRaceClick} />
                     ))}
                   </div>
@@ -196,19 +197,8 @@ export default function ElectionsPage() {
         )}
       </main>
 
-      {/* Race Detail Modal */}
-      {selectedRace && (
-        <RaceDetail race={selectedRace} onClose={() => setSelectedRace(null)} />
-      )}
-
-      {/* State Drawer */}
-      {selectedState && (
-        <StateDrawer
-          stateAbbr={selectedState}
-          onClose={() => setSelectedState(null)}
-          onViewRace={handleRaceClick}
-        />
-      )}
+      {selectedRace && <RaceDetail race={selectedRace} onClose={() => setSelectedRace(null)} />}
+      {selectedState && <StateDrawer stateAbbr={selectedState} onClose={() => setSelectedState(null)} onViewRace={handleRaceClick} />}
     </div>
   );
 }

@@ -1,19 +1,13 @@
 ---
 import ElectionsPage from '../components/elections/ElectionsPage';
+import AppLayout from '../layouts/AppLayout.astro';
 ---
 
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>2026 Election Tracker — cl1nical</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  </head>
-  <body class="bg-white">
-    <ElectionsPage client:load />
-  </body>
-</html>
+<AppLayout
+  title="2026 Election Tracker | cl1nical"
+  description="Interactive election map with state-level race data."
+  bodyStyle="--page-bg: #f5f5f4; --page-fg: #0f172a;"
+  theme="light"
+>
+  <ElectionsPage client:load />
+</AppLayout>
