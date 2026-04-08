@@ -2,10 +2,12 @@ import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, Line, MeshDistortMaterial, Points, PointMaterial, Sparkles } from '@react-three/drei';
 import Lenis from 'lenis';
 import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import ScrollTriggerModule from 'gsap/ScrollTrigger';
 import { ArrowRight, ShieldCheck, Orbit, Radar, Workflow, Lock, Vote } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import * as THREE from 'three';
+
+const { ScrollTrigger } = ScrollTriggerModule;
 
 gsap.registerPlugin(ScrollTrigger);
 
