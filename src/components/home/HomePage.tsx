@@ -1,15 +1,8 @@
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Float, Line, MeshDistortMaterial, Points, PointMaterial, Sparkles } from '@react-three/drei';
-import Lenis from 'lenis';
-import gsap from 'gsap';
-import ScrollTriggerModule from 'gsap/ScrollTrigger';
 import { ArrowRight, ShieldCheck, Orbit, Radar, Workflow, Lock, Vote } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import * as THREE from 'three';
-
-const { ScrollTrigger } = ScrollTriggerModule;
-
-gsap.registerPlugin(ScrollTrigger);
 
 const metrics = [
   { value: '03', label: 'Live systems', detail: 'Auth, election intelligence, and personal utility surfaces under one shell.' },
@@ -231,6 +224,7 @@ export default function HomePage() {
   const rootRef = useRef<HTMLDivElement>(null);
   const cursorRef = useRef<HTMLDivElement>(null);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -241,110 +235,125 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  useEffect(() => {
     if (reducedMotion) {
       return;
     }
+    let cleanup: (() => void) | undefined;
 
-    const lenis = new Lenis({
-      duration: 1.15,
-      smoothWheel: true,
-      touchMultiplier: 1.15,
-    });
+    void Promise.all([import('lenis'), import('gsap'), import('gsap/ScrollTrigger')]).then(
+      ([lenisModule, gsapModule, scrollTriggerModule]) => {
+        const Lenis = lenisModule.default;
+        const gsap = gsapModule.default;
+        const ScrollTrigger = (scrollTriggerModule.default as { ScrollTrigger?: unknown }).ScrollTrigger ?? scrollTriggerModule.default;
+        gsap.registerPlugin(ScrollTrigger as never);
 
-    let rafId = 0;
-    const raf = (time: number) => {
-      lenis.raf(time);
-      rafId = requestAnimationFrame(raf);
-    };
+        const lenis = new Lenis({
+          duration: 1.15,
+          smoothWheel: true,
+          touchMultiplier: 1.15,
+        });
 
-    rafId = requestAnimationFrame(raf);
+        let rafId = 0;
+        const raf = (time: number) => {
+          lenis.raf(time);
+          rafId = requestAnimationFrame(raf);
+        };
 
-    lenis.on('scroll', ScrollTrigger.update);
+        rafId = requestAnimationFrame(raf);
+        lenis.on('scroll', () => (ScrollTrigger as { update: () => void }).update());
 
-    const context = gsap.context(() => {
-      gsap.fromTo(
-        '.hero-line',
-        { yPercent: 120, opacity: 0 },
-        {
-          yPercent: 0,
-          opacity: 1,
-          duration: 1.1,
-          stagger: 0.08,
-          ease: 'power4.out',
-        },
-      );
-
-      gsap.fromTo(
-        '.hero-meta, .hero-actions, .command-deck',
-        { y: 36, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 1,
-          stagger: 0.1,
-          delay: 0.3,
-          ease: 'power3.out',
-        },
-      );
-
-      gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach((element) => {
-        gsap.fromTo(
-          element,
-          { y: 60, opacity: 0, filter: 'blur(12px)' },
-          {
-            y: 0,
-            opacity: 1,
-            filter: 'blur(0px)',
-            duration: 1,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: element,
-              start: 'top 82%',
+        const context = gsap.context(() => {
+          gsap.fromTo(
+            '.hero-line',
+            { yPercent: 120, opacity: 0 },
+            {
+              yPercent: 0,
+              opacity: 1,
+              duration: 1.1,
+              stagger: 0.08,
+              ease: 'power4.out',
             },
-          },
-        );
-      });
+          );
 
-      const cards = gsap.utils.toArray<HTMLElement>('.story-card');
-      if (cards.length > 0 && window.innerWidth >= 960) {
-        const timeline = gsap.timeline({
-          scrollTrigger: {
-            trigger: '.story-stack',
-            start: 'top top',
-            end: '+=220%',
-            scrub: true,
-            pin: true,
-          },
-        });
+          gsap.fromTo(
+            '.hero-meta, .hero-actions, .command-deck',
+            { y: 36, opacity: 0 },
+            {
+              y: 0,
+              opacity: 1,
+              duration: 1,
+              stagger: 0.1,
+              delay: 0.3,
+              ease: 'power3.out',
+            },
+          );
 
-        cards.forEach((card, index) => {
-          timeline.to(card, {
-            y: -index * 22,
-            opacity: 1,
-            scale: 1,
-            duration: 0.8,
-          }, index === 0 ? 0 : `>-=0.2`);
-        });
-      }
+          gsap.utils.toArray<HTMLElement>('[data-reveal]').forEach((element) => {
+            gsap.fromTo(
+              element,
+              { y: 60, opacity: 0, filter: 'blur(12px)' },
+              {
+                y: 0,
+                opacity: 1,
+                filter: 'blur(0px)',
+                duration: 1,
+                ease: 'power3.out',
+                scrollTrigger: {
+                  trigger: element,
+                  start: 'top 82%',
+                },
+              },
+            );
+          });
 
-      gsap.to('.orb-shell', {
-        yPercent: -14,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: '.hero-shell',
-          start: 'top top',
-          end: 'bottom top',
-          scrub: true,
-        },
-      });
-    }, rootRef);
+          const cards = gsap.utils.toArray<HTMLElement>('.story-card');
+          if (cards.length > 0 && window.innerWidth >= 960) {
+            const timeline = gsap.timeline({
+              scrollTrigger: {
+                trigger: '.story-stack',
+                start: 'top top',
+                end: '+=220%',
+                scrub: true,
+                pin: true,
+              },
+            });
 
-    return () => {
-      context.revert();
-      lenis.destroy();
-      cancelAnimationFrame(rafId);
-      ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
-    };
+            cards.forEach((card, index) => {
+              timeline.to(card, {
+                y: -index * 22,
+                opacity: 1,
+                scale: 1,
+                duration: 0.8,
+              }, index === 0 ? 0 : `>-=0.2`);
+            });
+          }
+
+          gsap.to('.orb-shell', {
+            yPercent: -14,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: '.hero-shell',
+              start: 'top top',
+              end: 'bottom top',
+              scrub: true,
+            },
+          });
+        }, rootRef);
+
+        cleanup = () => {
+          context.revert();
+          lenis.destroy();
+          cancelAnimationFrame(rafId);
+          (ScrollTrigger as { getAll: () => Array<{ kill: () => void }> }).getAll().forEach((trigger) => trigger.kill());
+        };
+      },
+    );
+
+    return () => cleanup?.();
   }, [reducedMotion]);
 
   useEffect(() => {
@@ -449,9 +458,15 @@ export default function HomePage() {
                   <span>Three.js + R3F</span>
                 </div>
                 <div className="h-[420px] sm:h-[520px] lg:h-[640px]">
-                  <Canvas camera={{ position: [0, 0, 7.5], fov: 42 }} dpr={[1, 1.8]}>
-                    <HeroConstellation reducedMotion={reducedMotion} />
-                  </Canvas>
+                  {mounted ? (
+                    <Canvas camera={{ position: [0, 0, 7.5], fov: 42 }} dpr={[1, 1.8]}>
+                      <HeroConstellation reducedMotion={reducedMotion} />
+                    </Canvas>
+                  ) : (
+                    <div className="flex h-full items-center justify-center bg-[radial-gradient(circle_at_center,_rgba(88,120,255,0.28),_transparent_35%)]">
+                      <div className="h-56 w-56 rounded-full border border-white/10 bg-[radial-gradient(circle_at_center,_rgba(135,168,255,0.45),_rgba(29,79,255,0.18)_45%,_transparent_70%)] blur-[1px]" />
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

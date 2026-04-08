@@ -8,24 +8,21 @@ export type ProfileRecord = {
   updated_at: string | null;
 };
 
-function isMissingProfilesTable(message: string | undefined) {
-  return Boolean(message?.includes(`Could not find the table 'public.profiles' in the schema cache`));
-}
-
 export async function getProfileByUser(supabase: SupabaseClient, user: User) {
-  const result = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .maybeSingle<ProfileRecord>();
-
-  if (result.error && !isMissingProfilesTable(result.error.message)) {
-    throw result.error;
-  }
+  const metadata = user.user_metadata && typeof user.user_metadata === 'object'
+    ? user.user_metadata as Record<string, unknown>
+    : {};
+  const rawSettings = metadata.settings;
 
   return {
-    profile: result.error ? null : result.data,
-    missingProfilesTable: Boolean(result.error && isMissingProfilesTable(result.error.message)),
+    profile: {
+      id: user.id,
+      display_name: typeof metadata.display_name === 'string' ? metadata.display_name : null,
+      avatar_url: typeof metadata.avatar_url === 'string' ? metadata.avatar_url : null,
+      settings: rawSettings && typeof rawSettings === 'object' ? rawSettings as Record<string, unknown> : {},
+      updated_at: typeof metadata.profile_updated_at === 'string' ? metadata.profile_updated_at : null,
+    } satisfies ProfileRecord,
+    missingProfilesTable: false,
   };
 }
 
@@ -38,23 +35,14 @@ export async function upsertProfileByUser(
     settings: Record<string, unknown>;
   },
 ) {
-  const payload = {
-    id: user.id,
-    ...values,
-    updated_at: new Date().toISOString(),
-  };
-
-  const result = await supabase
-    .from('profiles')
-    .upsert(payload, { onConflict: 'id' });
-
-  if (result.error && isMissingProfilesTable(result.error.message)) {
-    return {
-      ok: false as const,
-      missingProfilesTable: true,
-      error: 'The Supabase profiles table is not available yet. Run the latest SQL migration, then try again.',
-    };
-  }
+  const result = await supabase.auth.updateUser({
+    data: {
+      display_name: values.display_name,
+      avatar_url: values.avatar_url,
+      settings: values.settings,
+      profile_updated_at: new Date().toISOString(),
+    },
+  });
 
   if (result.error) {
     throw result.error;

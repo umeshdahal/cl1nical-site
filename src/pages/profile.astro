@@ -33,7 +33,7 @@ const profileSettings = (profile?.settings ?? {}) as Record<string, unknown>;
       <p class="mt-3 text-sm text-white/60">{user.email}</p>
       {missingProfilesTable && (
         <div class="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-          Your Supabase project is missing the `public.profiles` table. Apply the latest migration, then profile changes will persist normally.
+          Your Supabase project is missing the `public.profiles` table. The app now stores profile updates in auth metadata, but you should still apply the latest migration if you want the relational profile table available.
         </div>
       )}
     </div>

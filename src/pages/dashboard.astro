@@ -108,11 +108,11 @@ const workspaceCards = [
 
           <aside class="rounded-[2rem] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.09),rgba(255,255,255,0.03))] p-6">
             <p class="text-[11px] uppercase tracking-[0.22em] text-white/42">Runtime health</p>
-            {missingProfilesTable && (
-              <div class="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
-                Profile storage is not provisioned in Supabase yet. Apply the latest SQL migration to enable saved preferences.
-              </div>
-            )}
+        {missingProfilesTable && (
+          <div class="mt-4 rounded-2xl border border-amber-400/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+            Relational profile storage is not provisioned in Supabase yet. The app is using auth metadata for account preferences, and you can still apply the latest SQL migration to restore the `public.profiles` table.
+          </div>
+        )}
             <div class="mt-6 space-y-4">
               <div class="rounded-[1.6rem] border border-white/10 bg-black/20 p-4">
                 <p class="text-[10px] uppercase tracking-[0.18em] text-white/38">Session mode</p>
