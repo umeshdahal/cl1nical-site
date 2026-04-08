@@ -1,7 +1,9 @@
-import { useRef, useState } from 'react';
-import { ComposableMap, Geographies, Geography } from 'react-simple-maps';
-import usAtlasUrl from 'us-atlas/states-10m.json?url';
-import { getStateSummary, STATE_NAME_TO_ABBR, type StateSummary } from '../../lib/election-states';
+// @ts-nocheck
+import { useMemo, useRef, useState } from 'react';
+import { geoAlbersUsa, geoPath } from 'd3-geo';
+import { feature } from 'topojson-client';
+import usAtlas from 'us-atlas/states-10m.json';
+import { FIPS_TO_ABBR, getStateSummary, type StateSummary } from '../../lib/election-states';
 
 type HoverState = {
   summary: StateSummary;
@@ -14,9 +16,39 @@ type USMapProps = {
   selectedState: string | null;
 };
 
+const WIDTH = 980;
+const HEIGHT = 620;
+
 export default function USMap({ onStateClick, selectedState }: USMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [hovered, setHovered] = useState<HoverState>(null);
+
+  const { projectedStates, pathFor } = useMemo(() => {
+    const topo = usAtlas as any;
+    const collection = feature(topo, topo.objects.states);
+    const projection = geoAlbersUsa().fitSize([WIDTH, HEIGHT], collection);
+    const path = geoPath(projection);
+
+    const states = collection.features
+      .map((geometry: any) => {
+        const fips = String(geometry.id).padStart(2, '0');
+        const abbr = FIPS_TO_ABBR[fips];
+        if (!abbr) {
+          return null;
+        }
+
+        return {
+          abbr,
+          shape: path(geometry),
+        };
+      })
+      .filter(Boolean);
+
+    return {
+      projectedStates: states,
+      pathFor: path,
+    };
+  }, []);
 
   const updateTooltip = (event: React.MouseEvent<SVGPathElement>, summary: StateSummary) => {
     const bounds = containerRef.current?.getBoundingClientRect();
@@ -34,59 +66,33 @@ export default function USMap({ onStateClick, selectedState }: USMapProps) {
   return (
     <div ref={containerRef} className="relative">
       <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-[linear-gradient(180deg,#ffffff_0%,#f8fafc_100%)] p-3 shadow-sm sm:p-5">
-        <ComposableMap
-          projection="geoAlbersUsa"
-          width={980}
-          height={620}
-          className="h-auto w-full"
-          style={{ width: '100%', height: 'auto' }}
-        >
-          <Geographies geography={usAtlasUrl}>
-            {({ geographies }) => geographies.map((geography) => {
-              const abbr = STATE_NAME_TO_ABBR[geography.properties.name];
-              if (!abbr) {
-                return null;
-              }
-
-              const summary = getStateSummary(abbr);
-              const isSelected = selectedState === abbr;
+        <svg viewBox={`0 0 ${WIDTH} ${HEIGHT}`} className="h-auto w-full" role="img" aria-label="United States election map">
+          <rect width={WIDTH} height={HEIGHT} fill="#f8fafc" />
+          <g>
+            {projectedStates.map((state: any) => {
+              const summary = getStateSummary(state.abbr);
+              const isSelected = selectedState === state.abbr;
 
               return (
-                <Geography
-                  key={geography.rsmKey}
-                  geography={geography}
+                <path
+                  key={state.abbr}
+                  d={state.shape || ''}
+                  fill={summary.fill}
+                  stroke="#ffffff"
+                  strokeWidth={isSelected ? 2 : 0.85}
+                  style={{
+                    cursor: 'pointer',
+                    transition: 'fill 160ms ease, filter 160ms ease, stroke-width 160ms ease',
+                  }}
                   onMouseEnter={(event) => updateTooltip(event, summary)}
                   onMouseMove={(event) => updateTooltip(event, summary)}
                   onMouseLeave={() => setHovered(null)}
-                  onClick={() => onStateClick(abbr)}
-                  style={{
-                    default: {
-                      fill: summary.fill,
-                      stroke: '#ffffff',
-                      strokeWidth: isSelected ? 1.8 : 0.75,
-                      outline: 'none',
-                      transition: 'fill 160ms ease, filter 160ms ease, stroke-width 160ms ease',
-                    },
-                    hover: {
-                      fill: summary.fill,
-                      stroke: '#0f172a',
-                      strokeWidth: 1.6,
-                      outline: 'none',
-                      cursor: 'pointer',
-                      filter: 'brightness(1.06)',
-                    },
-                    pressed: {
-                      fill: summary.fill,
-                      stroke: '#0f172a',
-                      strokeWidth: 1.8,
-                      outline: 'none',
-                    },
-                  }}
+                  onClick={() => onStateClick(state.abbr)}
                 />
               );
             })}
-          </Geographies>
-        </ComposableMap>
+          </g>
+        </svg>
       </div>
 
       {hovered && (
