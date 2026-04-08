@@ -6,6 +6,7 @@ import Filters from './Filters';
 import USMap from './USMap';
 import RaceCard from './RaceCard';
 import RaceDetail from './RaceDetail';
+import StateDrawer from './StateDrawer';
 
 export default function ElectionsPage() {
   const [races, setRaces] = useState([]);
@@ -49,8 +50,8 @@ export default function ElectionsPage() {
     return grouped;
   }, [filteredRaces]);
 
-  const handleStateClick = (stateName) => {
-    setSelectedState(selectedState === stateName ? null : stateName);
+  const handleStateClick = (abbr) => {
+    setSelectedState(selectedState === abbr ? null : abbr);
   };
 
   const handleRaceClick = async (id) => {
@@ -58,63 +59,75 @@ export default function ElectionsPage() {
     setSelectedRace(race);
   };
 
+  const totalSeats = seatCounts.dem + seatCounts.rep + seatCounts.toss;
+  const demPct = totalSeats > 0 ? (seatCounts.dem / totalSeats) * 100 : 0;
+  const repPct = totalSeats > 0 ? (seatCounts.rep / totalSeats) * 100 : 0;
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="text-[#F5F0E8] font-mono">Loading election data...</div>
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-[#0f0f0f] font-mono text-sm">Loading election data...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-[#F5F0E8]">
+    <div className="min-h-screen bg-white text-[#0f0f0f]" style={{ fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
       <Ticker />
 
       {/* Header */}
-      <header className="border-b border-[#222222] px-6 py-4">
+      <header className="border-b border-[#e2e2e2] px-6 py-4">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="font-heading text-3xl font-semibold">2026 Election Tracker</h1>
-              <p className="text-[#8C8882] font-mono text-sm mt-1">Real-time race ratings and polling data</p>
+              <h1 className="text-2xl font-bold tracking-tight">2026 Election Tracker</h1>
+              <p className="text-sm text-[#666] mt-0.5">Real-time race ratings and polling data</p>
             </div>
-            <a href="/" className="font-heading text-lg font-semibold text-[#F5F0E8] hover:text-[#E8A020] transition-colors">
+            <a href="/" className="text-sm font-semibold text-[#0f0f0f] hover:text-[#666] transition-colors">
               cl1nical
             </a>
           </div>
 
-          {/* Seat Count Tracker */}
-          <div className="flex items-center gap-6 mb-4 p-4 bg-[#111111] border border-[#222222] rounded-xl">
-            <div className="text-center">
-              <div className="text-2xl font-mono font-bold text-[#3b82f6]">{seatCounts.dem}</div>
-              <div className="text-xs font-mono text-[#8C8882]">Democrat</div>
+          {/* Seat Count Bar */}
+          <div className="mb-4">
+            <div className="flex items-center gap-4 mb-2">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-[#1a4a8a]">DEM</span>
+                <span className="text-sm font-mono font-bold tabular-nums">{seatCounts.dem}</span>
+              </div>
+              <div className="flex-1 h-3 bg-[#e2e2e2] rounded-[2px] overflow-hidden flex">
+                <div className="h-full bg-[#1a4a8a] transition-all" style={{ width: `${demPct}%` }} />
+                <div className="h-full bg-[#e8a838] transition-all" style={{ width: `${(seatCounts.toss / totalSeats) * 100}%` }} />
+                <div className="h-full bg-[#8a1a1a] transition-all" style={{ width: `${repPct}%` }} />
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-mono font-bold tabular-nums">{seatCounts.rep}</span>
+                <span className="text-xs font-semibold text-[#8a1a1a]">REP</span>
+              </div>
+              <div className="text-xs text-[#999] font-mono">
+                51 to control
+              </div>
             </div>
-            <div className="text-center">
-              <div className="text-2xl font-mono font-bold text-[#d97706]">{seatCounts.toss}</div>
-              <div className="text-xs font-mono text-[#8C8882]">Toss-up</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-mono font-bold text-[#ef4444]">{seatCounts.rep}</div>
-              <div className="text-xs font-mono text-[#8C8882]">Republican</div>
-            </div>
-            <div className="ml-auto text-xs font-mono text-[#555]">
-              Senate: {seatCounts.dem + seatCounts.rep + seatCounts.toss} seats
+            <div className="flex items-center gap-4 text-xs text-[#666]">
+              <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#1a4a8a] rounded-[1px]" /> Democrat</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#e8a838] rounded-[1px]" /> Toss-up</span>
+              <span className="flex items-center gap-1"><span className="w-2 h-2 bg-[#8a1a1a] rounded-[1px]" /> Republican</span>
             </div>
           </div>
 
           {/* Tab Navigation */}
-          <div className="flex gap-2">
+          <div className="flex gap-1">
             {[
-              { key: 'map', label: 'Interactive Map' },
+              { key: 'map', label: 'Map' },
               { key: 'races', label: 'All Races' },
             ].map(tab => (
               <button
                 key={tab.key}
                 onClick={() => { setActiveTab(tab.key); setSelectedState(null); }}
-                className={`px-4 py-2 text-sm font-mono rounded-lg transition-colors ${
+                className={`px-4 py-1.5 text-xs font-semibold rounded-[2px] transition-colors ${
                   activeTab === tab.key
-                    ? 'bg-[#E8A020] text-[#0a0a0a]'
-                    : 'bg-[#111111] text-[#8C8882] hover:text-[#F5F0E8]'
+                    ? 'bg-[#0f0f0f] text-white'
+                    : 'bg-white text-[#666] border border-[#e2e2e2] hover:border-[#999]'
                 }`}
               >
                 {tab.label}
@@ -131,26 +144,26 @@ export default function ElectionsPage() {
         {activeTab === 'map' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2">
-              <div className="bg-[#111111] border border-[#222222] rounded-xl p-4">
+              <div className="bg-white border border-[#e2e2e2] rounded-[2px] p-4">
                 <USMap onStateClick={handleStateClick} selectedState={selectedState} />
                 {selectedState && (
-                  <div className="mt-4 flex items-center justify-between">
-                    <span className="text-sm font-mono text-[#8C8882]">
-                      Showing: {selectedState}
+                  <div className="mt-4 flex items-center justify-between pt-3 border-t border-[#e2e2e2]">
+                    <span className="text-sm font-semibold text-[#0f0f0f]">
+                      {selectedState}
                     </span>
                     <button
                       onClick={() => setSelectedState(null)}
-                      className="text-xs font-mono text-[#E8A020] hover:text-[#d4911a]"
+                      className="text-xs font-semibold text-[#1a4a8a] hover:text-[#0f0f0f] transition-colors"
                     >
-                      Clear filter
+                      Clear
                     </button>
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="space-y-4">
-              <h3 className="text-sm font-mono text-[#8C8882] uppercase">
+            <div className="space-y-3">
+              <h3 className="text-xs font-semibold text-[#666] uppercase tracking-wide">
                 {selectedState ? `${selectedState} Races` : 'Toss-up Races'}
               </h3>
               {(selectedState
@@ -170,8 +183,8 @@ export default function ElectionsPage() {
               if (!typeRaces || typeRaces.length === 0) return null;
               return (
                 <div key={type}>
-                  <h3 className="text-sm font-mono text-[#8C8882] uppercase mb-4">{type} ({typeRaces.length})</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <h3 className="text-xs font-semibold text-[#666] uppercase tracking-wide mb-3">{type} ({typeRaces.length})</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                     {typeRaces.map(race => (
                       <RaceCard key={race.id} race={race} onClick={handleRaceClick} />
                     ))}
@@ -186,6 +199,15 @@ export default function ElectionsPage() {
       {/* Race Detail Modal */}
       {selectedRace && (
         <RaceDetail race={selectedRace} onClose={() => setSelectedRace(null)} />
+      )}
+
+      {/* State Drawer */}
+      {selectedState && (
+        <StateDrawer
+          stateAbbr={selectedState}
+          onClose={() => setSelectedState(null)}
+          onViewRace={handleRaceClick}
+        />
       )}
     </div>
   );

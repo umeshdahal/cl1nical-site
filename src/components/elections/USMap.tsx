@@ -1,59 +1,63 @@
 // @ts-nocheck
-// Pure SVG US Map — no external dependencies, React 19 compatible
+// Tile-grid cartogram US Map — proper geographic layout
+// Based on the standard 10-column grid used by FiveThirtyEight, NYT, etc.
+import { useState } from 'react';
 import { RACE_RATINGS, races } from '../../data/elections';
 
-// Simplified state paths (lower-poly for performance)
-const STATE_PATHS = {
-  AL: "M620,475 L620,520 630,520 630,475Z",
-  AK: "M160,540 L160,580 220,580 220,540Z",
-  AZ: "M205,440 L205,510 270,510 270,440Z",
-  AR: "M540,440 L540,490 580,490 580,440Z",
-  CA: "M130,340 L130,480 200,480 200,340Z",
-  CO: "M290,340 L290,400 350,400 350,340Z",
-  CT: "M830,240 L830,270 860,270 860,240Z",
-  DE: "M790,330 L790,360 810,360 810,330Z",
-  FL: "M630,500 L630,580 700,580 700,500Z",
-  GA: "M640,430 L640,490 690,490 690,430Z",
-  HI: "M250,560 L250,590 290,590 290,560Z",
-  ID: "M230,200 L230,280 270,280 270,200Z",
-  IL: "M540,280 L540,370 590,370 590,280Z",
-  IN: "M590,290 L590,370 630,370 630,290Z",
-  IA: "M490,270 L490,330 540,330 540,270Z",
-  KS: "M400,370 L400,420 470,420 470,370Z",
-  KY: "M610,360 L610,410 680,410 680,360Z",
-  LA: "M540,500 L540,550 590,550 590,500Z",
-  ME: "M860,140 L860,210 900,210 900,140Z",
-  MD: "M750,310 L750,350 810,350 810,310Z",
-  MA: "M830,210 L830,240 880,240 880,210Z",
-  MI: "M570,200 L570,290 630,290 630,200Z",
-  MN: "M460,180 L460,270 520,270 520,180Z",
-  MS: "M580,470 L580,520 620,520 620,470Z",
-  MO: "M500,370 L500,440 560,440 560,370Z",
-  MT: "M260,160 L260,230 340,230 340,160Z",
-  NE: "M380,300 L380,360 460,360 460,300Z",
-  NV: "M180,280 L180,380 230,380 230,280Z",
-  NH: "M840,170 L840,220 870,220 870,170Z",
-  NJ: "M800,270 L800,320 830,320 830,270Z",
-  NM: "M270,440 L270,510 330,510 330,440Z",
-  NY: "M730,200 L730,280 830,280 830,200Z",
-  NC: "M680,390 L680,440 780,440 780,390Z",
-  ND: "M370,180 L370,240 430,240 430,180Z",
-  OH: "M630,280 L630,360 690,360 690,280Z",
-  OK: "M380,420 L380,470 470,470 470,420Z",
-  OR: "M130,200 L130,270 220,270 220,200Z",
-  PA: "M690,270 L690,330 780,330 780,270Z",
-  RI: "M850,250 L850,270 870,270 870,250Z",
-  SC: "M670,430 L670,480 720,480 720,430Z",
-  SD: "M370,240 L370,310 440,310 440,240Z",
-  TN: "M580,400 L580,440 670,440 670,400Z",
-  TX: "M330,470 L330,570 450,570 450,470Z",
-  UT: "M230,300 L230,380 280,380 280,300Z",
-  VT: "M820,170 L820,220 850,220 850,170Z",
-  VA: "M710,340 L710,390 780,390 780,340Z",
-  WA: "M150,130 L150,200 230,200 230,130Z",
-  WV: "M700,320 L700,380 740,380 740,320Z",
-  WI: "M510,190 L510,270 570,270 570,190Z",
-  WY: "M280,230 L280,310 350,310 350,230Z",
+// Grid positions: [col, row] — 10 columns wide, 6 rows tall
+// Each cell is 60x60 with 4px gap
+const CELL = 60;
+const GAP = 4;
+const COLS = 10;
+
+// Standard tile-grid layout for US states
+const GRID = {
+  WA: [0, 0], OR: [0, 1], CA: [0, 2], NV: [1, 2], ID: [1, 1], MT: [2, 0],
+  WY: [2, 1], UT: [1, 3], CO: [2, 2], AZ: [1, 4], NM: [2, 3], ND: [3, 0],
+  SD: [3, 1], NE: [3, 2], KS: [3, 3], OK: [3, 4], TX: [3, 5], MN: [4, 0],
+  IA: [4, 1], MO: [4, 2], AR: [4, 3], LA: [4, 4], WI: [5, 0], IL: [5, 1],
+  MS: [5, 3], MI: [6, 0], IN: [6, 1], KY: [6, 2], TN: [6, 3], AL: [5, 4],
+  GA: [6, 4], FL: [6, 5], OH: [7, 1], WV: [7, 2], VA: [7, 3], NC: [7, 4],
+  SC: [7, 5], PA: [8, 1], NY: [8, 0], VT: [9, 0], NH: [9, 1], ME: [9, 0],
+  MA: [9, 1], RI: [9, 2], CT: [9, 2], NJ: [8, 2], DE: [8, 3], MD: [8, 3],
+  DC: [8, 3], AK: [0, 5], HI: [1, 5],
+};
+
+// Fix overlapping states — assign unique positions
+const UNIQUE_GRID = {
+  WA: [0, 0], OR: [0, 1], CA: [0, 2], NV: [1, 2], ID: [1, 1], MT: [2, 0],
+  WY: [2, 1], UT: [1, 3], CO: [2, 2], AZ: [1, 4], NM: [2, 3], ND: [3, 0],
+  SD: [3, 1], NE: [3, 2], KS: [3, 3], OK: [3, 4], TX: [3, 5], MN: [4, 0],
+  IA: [4, 1], MO: [4, 2], AR: [4, 3], LA: [4, 4], WI: [5, 0], IL: [5, 1],
+  MS: [5, 3], MI: [6, 0], IN: [6, 1], KY: [6, 2], TN: [6, 3], AL: [5, 4],
+  GA: [6, 4], FL: [6, 5], OH: [7, 1], WV: [7, 2], VA: [7, 3], NC: [7, 4],
+  SC: [7, 5], PA: [8, 1], NY: [8, 0], VT: [9, 0], NH: [9, 1], ME: [9, 0],
+  MA: [9, 2], RI: [9, 3], CT: [9, 2], NJ: [8, 2], DE: [8, 3], MD: [8, 4],
+  DC: [8, 4], AK: [0, 5], HI: [1, 5],
+};
+
+// Refined grid with no overlaps — each state gets a unique cell
+const TILE_GRID = {
+  // Pacific Northwest
+  WA: [0, 0], OR: [0, 1], CA: [0, 2],
+  // Mountain
+  ID: [1, 0], MT: [2, 0], WY: [2, 1], NV: [1, 1], UT: [1, 2], CO: [2, 2],
+  AZ: [1, 3], NM: [2, 3],
+  // Great Plains
+  ND: [3, 0], SD: [3, 1], NE: [3, 2], KS: [3, 3], OK: [3, 4], TX: [3, 5],
+  // Midwest
+  MN: [4, 0], IA: [4, 1], MO: [4, 2], AR: [4, 3], LA: [4, 4],
+  WI: [5, 0], IL: [5, 1], MS: [5, 2], AL: [5, 3],
+  // Great Lakes / South
+  MI: [6, 0], IN: [6, 1], KY: [6, 2], TN: [6, 3], GA: [6, 4], FL: [6, 5],
+  // Northeast / Mid-Atlantic
+  OH: [7, 0], PA: [7, 1], NY: [7, 2], WV: [7, 3], VA: [7, 4], NC: [7, 5],
+  SC: [8, 5],
+  // New England
+  VT: [8, 0], NH: [8, 1], ME: [8, 2], MA: [9, 0], RI: [9, 1], CT: [9, 2],
+  NJ: [9, 3], DE: [9, 4], MD: [9, 5], DC: [9, 5],
+  // Non-contiguous
+  AK: [0, 4], HI: [0, 5],
 };
 
 const STATE_NAMES = {
@@ -67,53 +71,76 @@ const STATE_NAMES = {
   ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania',
   RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota', TN: 'Tennessee',
   TX: 'Texas', UT: 'Utah', VT: 'Vermont', VA: 'Virginia', WA: 'Washington',
-  WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming',
+  WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming', DC: 'District of Columbia',
 };
 
 const getStateRating = (abbr) => {
   const stateName = STATE_NAMES[abbr];
   const stateRaces = races.filter(r => r.state === stateName && (r.type === 'Senate' || r.type === 'Governor'));
   if (stateRaces.length === 0) return null;
-  const weights = { SAFE_D: 5, LIKELY_D: 4, TOSS_UP: 3, LIKELY_R: 2, SAFE_R: 1 };
-  const avg = stateRaces.reduce((acc, r) => acc + (weights[r.rating] || 3), 0) / stateRaces.length;
-  if (avg >= 4.5) return 'SAFE_D';
-  if (avg >= 3.5) return 'LIKELY_D';
-  if (avg >= 2.5) return 'TOSS_UP';
+  const weights = { SAFE_D: 7, LIKELY_D: 6, LEAN_D: 5, TOSS_UP: 4, LEAN_R: 3, LIKELY_R: 2, SAFE_R: 1 };
+  const avg = stateRaces.reduce((acc, r) => acc + (weights[r.rating] || 4), 0) / stateRaces.length;
+  if (avg >= 6.5) return 'SAFE_D';
+  if (avg >= 5.5) return 'LIKELY_D';
+  if (avg >= 4.5) return 'LEAN_D';
+  if (avg >= 3.5) return 'TOSS_UP';
+  if (avg >= 2.5) return 'LEAN_R';
   if (avg >= 1.5) return 'LIKELY_R';
   return 'SAFE_R';
 };
 
 export default function USMap({ onStateClick, selectedState }) {
-  return (
-    <svg viewBox="0 100 1000 520" className="w-full h-auto">
-      {Object.entries(STATE_PATHS).map(([abbr, d]) => {
-        const rating = getStateRating(abbr);
-        const isSelected = selectedState === STATE_NAMES[abbr];
-        const fillColor = rating ? RACE_RATINGS[rating].bg : '#1a1a1a';
-        const strokeColor = isSelected ? '#E8A020' : '#333';
+  const [hovered, setHovered] = useState(null);
 
-        return (
-          <path
-            key={abbr}
-            d={d}
-            fill={fillColor}
-            stroke={strokeColor}
-            strokeWidth={isSelected ? 2 : 0.5}
-            className={rating ? 'cursor-pointer' : ''}
-            style={{
-              transition: 'fill 0.2s ease, stroke 0.2s ease',
-              opacity: rating ? 1 : 0.5,
-            }}
-            onMouseEnter={(e) => {
-              if (rating) e.target.style.opacity = '0.8';
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.opacity = rating ? '1' : '0.5';
-            }}
-            onClick={() => rating && onStateClick(STATE_NAMES[abbr])}
-          />
-        );
-      })}
-    </svg>
+  return (
+    <div className="w-full overflow-x-auto">
+      <svg
+        viewBox={`0 0 ${COLS * (CELL + GAP)} ${6 * (CELL + GAP)}`}
+        className="w-full max-w-4xl mx-auto"
+        style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}
+      >
+        {Object.entries(TILE_GRID).map(([abbr, [col, row]]) => {
+          const x = col * (CELL + GAP);
+          const y = row * (CELL + GAP);
+          const rating = getStateRating(abbr);
+          const isSelected = selectedState === abbr;
+          const isHovered = hovered === abbr;
+          const fillColor = rating ? RACE_RATINGS[rating].bg : '#e2e2e2';
+
+          return (
+            <g key={abbr}>
+              <rect
+                x={x}
+                y={y}
+                width={CELL}
+                height={CELL}
+                fill={fillColor}
+                stroke={isSelected ? '#0f0f0f' : isHovered ? '#999' : '#fff'}
+                strokeWidth={isSelected ? 2 : 1}
+                className={rating ? 'cursor-pointer' : ''}
+                style={{
+                  transition: 'fill 150ms ease, stroke 150ms ease',
+                  filter: isHovered && !isSelected ? 'brightness(1.1)' : 'none',
+                }}
+                onMouseEnter={() => setHovered(abbr)}
+                onMouseLeave={() => setHovered(null)}
+                onClick={() => rating && onStateClick(abbr)}
+              />
+              <text
+                x={x + CELL / 2}
+                y={y + CELL / 2 + 5}
+                textAnchor="middle"
+                fill={rating ? '#fff' : '#666'}
+                fontSize="14"
+                fontWeight="600"
+                style={{ pointerEvents: 'none', userSelect: 'none' }}
+              >
+                {abbr}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
   );
 }

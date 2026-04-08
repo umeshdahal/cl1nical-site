@@ -3,11 +3,13 @@
 // Structured for easy swap to live API later
 
 export const RACE_RATINGS = {
-  SAFE_D: { label: 'Safe D', color: '#1e3a8a', bg: '#1e3a8a' },
-  LIKELY_D: { label: 'Likely D', color: '#3b82f6', bg: '#3b82f6' },
-  TOSS_UP: { label: 'Toss-up', color: '#d97706', bg: '#d97706' },
-  LIKELY_R: { label: 'Likely R', color: '#ef4444', bg: '#ef4444' },
-  SAFE_R: { label: 'Safe R', color: '#7f1d1d', bg: '#7f1d1d' },
+  SAFE_D:   { label: 'Safe D',   color: '#1a4a8a', bg: '#1a4a8a' },
+  LIKELY_D: { label: 'Likely D', color: '#4a7ec7', bg: '#4a7ec7' },
+  LEAN_D:   { label: 'Lean D',   color: '#89b4e8', bg: '#89b4e8' },
+  TOSS_UP:  { label: 'Toss-up',  color: '#e8a838', bg: '#e8a838' },
+  LEAN_R:   { label: 'Lean R',   color: '#e88a8a', bg: '#e88a8a' },
+  LIKELY_R: { label: 'Likely R', color: '#c94040', bg: '#c94040' },
+  SAFE_R:   { label: 'Safe R',   color: '#8a1a1a', bg: '#8a1a1a' },
 };
 
 export const RACE_TYPES = ['Presidential', 'Senate', 'House', 'Governor'];
