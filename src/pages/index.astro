@@ -9,5 +9,5 @@ import AppLayout from '../layouts/AppLayout.astro';
   bodyStyle="--page-bg: #050816; --page-fg: #f7f8fc;"
   showNoise={true}
 >
-  <HomePage client:load />
+  <HomePage client:only="react" />
 </AppLayout>
