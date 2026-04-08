@@ -2,53 +2,79 @@
 
 ## Prerequisites
 
-This project uses Astro 5.x which requires an SSR adapter for server-side authentication. The following steps set up the database schema and client utilities.
+This project uses Astro SSR with Supabase cookie-based authentication.
+
+Before running locally or deploying, make sure you have:
+- a Supabase project
+- the SQL migration applied
+- environment variables configured
+- a server-capable deployment target such as Vercel
 
 ## 1. Run SQL Migration
 
-Copy the contents of `supabase/migrations/001_initial_schema.sql` and run it in your Supabase SQL Editor:
+Copy the contents of `supabase/migrations/001_initial_schema.sql` and run it in your Supabase SQL Editor.
 
-1. Go to https://app.supabase.com/project/ynijuyggmzszbtccvwdz/sql
-2. Paste the SQL from `supabase/migrations/001_initial_schema.sql`
-3. Click "Run"
+Steps:
+1. Open your Supabase dashboard.
+2. Go to `SQL Editor`.
+3. Paste the SQL from `supabase/migrations/001_initial_schema.sql`.
+4. Run it.
 
 This creates:
-- `profiles` table linked to `auth.users` with `ON DELETE CASCADE`
-- Row Level Security (RLS) policies ensuring users can ONLY access their own data
-- Auto-create profile trigger on signup
-- Auto-update `updated_at` trigger
+- the `profiles` table linked to `auth.users`
+- Row Level Security policies so users can only access their own row
+- the signup trigger that auto-creates a profile
 
 ## 2. Environment Variables
 
-The `.env` file is already configured:
-```
-PUBLIC_SUPABASE_URL=https://ynijuyggmzszbtccvwdz.supabase.co
-PUBLIC_SUPABASE_ANON_KEY=sb_publishable_yucNzuubyuUUFIMcJcXyyQ_Qf6VVbGC
-```
+Create a local `.env` file with:
 
-## 3. For Full SSR Auth (Future)
-
-To enable HTTP-only cookie-based auth (preventing XSS token theft):
-
-1. Upgrade to Astro 6.x or install a compatible SSR adapter
-2. Add to `astro.config.mjs`:
-```js
-import node from '@astrojs/node';
-export default defineConfig({
-  output: 'server',
-  adapter: node({ mode: 'standalone' }),
-  // ...
-});
+```env
+PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-3. The middleware (`src/middleware.ts`) and server client (`src/lib/supabase/server.ts`) are already prepared for this.
+For Vercel, add the same values in:
+- `Project Settings -> Environment Variables`
 
-## 4. Current Client-Side Auth
+Use them for:
+- `Production`
+- `Preview`
+- `Development`
 
-For now, use the browser client (`src/lib/supabase/client.ts`) with Supabase's built-in session management. Tokens are stored in cookies by Supabase's internal implementation.
+## 3. Supabase Auth Configuration
+
+In Supabase:
+- go to `Authentication -> URL Configuration`
+
+Set:
+- `Site URL` to your production domain
+- `Redirect URLs` to include:
+  - `http://localhost:4321`
+  - your Vercel production URL
+  - your Vercel preview URL if needed
+
+If you want users to log in immediately after registering during development:
+- go to `Authentication -> Providers -> Email`
+- disable `Confirm email`
+
+If email confirmation stays enabled, registration will redirect users back to login with a check-email message.
+
+## 4. Current Auth Architecture
+
+This repo uses:
+- `src/lib/supabase.ts` for server and browser clients
+- `src/middleware.ts` for route protection
+- server-side `login`, `register`, `logout`, and `profile` handling
+
+Protected routes:
+- `/dashboard`
+- `/profile`
+- `/elections`
 
 ## Security Notes
 
-- RLS policies prevent IDOR attacks - users can ONLY access their own `profiles` row
-- Passwords are hashed by Supabase Auth (bcrypt/argon2) - never stored plaintext
-- `.env` is in `.gitignore` - secrets never committed
+- `.env` is gitignored and should never be committed
+- do not commit service role keys
+- the anon key is intended for browser use, but documentation should still use placeholders in public repos
+- RLS must remain enabled in Supabase for `profiles`

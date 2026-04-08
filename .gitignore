@@ -21,11 +21,11 @@ pnpm-debug.log*
 .env.development
 !.env.example
 
+# deployment metadata
+.vercel/
+
 # macOS-specific files
 .DS_Store
 
 # jetbrains setting folder
 .idea/
-
-# API Configuration
-src/lib/supabase.ts
