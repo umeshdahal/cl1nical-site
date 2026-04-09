@@ -1,6 +1,5 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import USMap from './USMap';
-import { fetchNationalDistricts, type HouseDistrict } from '../../lib/elections-live';
 
 const navItems = [
   { label: 'Map', href: '#map' },
@@ -53,37 +52,6 @@ function ColumnHeading({ children }: { children: ReactNode }) {
 }
 
 export default function ElectionsPage() {
-  const [districts, setDistricts] = useState<HouseDistrict[]>([]);
-  const [sourceLabel, setSourceLabel] = useState('live district source');
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      try {
-        setLoading(true);
-        const payload = await fetchNationalDistricts();
-        if (cancelled) return;
-        setDistricts(payload.districts);
-        setSourceLabel(payload.sourceLabel);
-        setError(null);
-      } catch (nextError) {
-        if (cancelled) return;
-        setDistricts([]);
-        setError(nextError instanceof Error ? nextError.message : 'unknown map error');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   return (
     <div
       className="min-h-screen"
@@ -113,10 +81,7 @@ export default function ElectionsPage() {
         </nav>
 
         <section id="map" className="pt-16 md:pt-20">
-          <USMap districts={districts} error={error} loading={loading} />
-          <p className="mt-5 text-center font-mono text-[11px] font-light tracking-[0.18em] text-[rgba(26,26,46,0.45)]">
-            {sourceLabel}
-          </p>
+          <USMap />
         </section>
 
         <section className="grid gap-y-14 pt-24 md:pt-28 lg:grid-cols-3 lg:gap-x-20" style={{ fontFamily: 'var(--font-sans)' }}>
