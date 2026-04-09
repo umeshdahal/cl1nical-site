@@ -4,7 +4,7 @@
 import { defineMiddleware } from 'astro:middleware';
 import { createServerClient } from './lib/supabase';
 
-const PROTECTED = ['/dashboard', '/profile', '/elections'];
+const PROTECTED = ['/dashboard', '/profile'];
 const GUEST_ONLY = ['/login', '/register'];
 
 export const onRequest = defineMiddleware(async (context, next) => {

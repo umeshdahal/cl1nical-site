@@ -1,13 +1,6 @@
 import { type ReactNode } from 'react';
 import USMap from './USMap';
 
-const navItems = [
-  { label: 'Map', href: '#map' },
-  { label: 'Races', href: '#races' },
-  { label: 'News', href: '#news' },
-  { label: 'Results', href: '#results' },
-];
-
 const hotRaces = [
   { district: 'NC SEN', names: 'Roy Cooper / Michael Whatley', dem: 48.5, rep: 39.9 },
   { district: 'GA-14', names: 'Clay Fuller / Shawn Harris', dem: 44.1, rep: 55.9 },
@@ -62,25 +55,8 @@ export default function ElectionsPage() {
         color: '#1a1a2e',
       }}
     >
-      <main className="mx-auto max-w-[1440px] px-7 pb-24 pt-8 md:px-10">
-        <nav className="flex items-center justify-between">
-          <a href="/" className="font-mono text-[11px] font-light uppercase tracking-[0.28em] text-[#3a3a5c] no-underline">
-            cl1nical
-          </a>
-          <div className="flex items-center gap-5 md:gap-7">
-            {navItems.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                className="font-mono text-[10px] font-light uppercase tracking-[0.24em] text-[rgba(26,26,46,0.45)] no-underline"
-              >
-                {item.label}
-              </a>
-            ))}
-          </div>
-        </nav>
-
-        <section id="map" className="pt-16 md:pt-20">
+      <main className="mx-auto max-w-[1440px] px-7 pb-24 pt-10 md:px-10 md:pt-12">
+        <section id="map">
           <USMap />
         </section>
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { geoAlbersUsa, geoPath } from 'd3-geo';
 import { easeCubicOut } from 'd3-ease';
 import { pointer, select } from 'd3-selection';
@@ -20,6 +20,7 @@ export default function USMap() {
   const dimensionsRef = useRef<Dimensions>({ width: 0, height: 0 });
   const resizeFrameRef = useRef<number | null>(null);
   const renderVersionRef = useRef(0);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -62,76 +63,86 @@ export default function USMap() {
       if (!width || !height) return;
 
       drawPlaceholder();
+      setError(null);
 
-      const topology = await getTopoJSON();
-      if (version !== renderVersionRef.current) return;
+      try {
+        const [districtsData, statesModule] = await Promise.all([getTopoJSON(), import('us-atlas/states-10m.json')]);
+        if (version !== renderVersionRef.current) return;
 
-      const districtObject =
-        topology.objects?.districts ??
-        topology.objects?.congress ??
-        Object.values(topology.objects ?? {})[0];
-      const stateObject = topology.objects?.states ?? topology.objects?.state;
+        const districtsFeatureCollection =
+          districtsData?.type === 'FeatureCollection'
+            ? (districtsData as GeoJSON.FeatureCollection)
+            : (topojson.feature(
+                districtsData as any,
+                districtsData.objects?.districts ?? districtsData.objects?.congress ?? Object.values(districtsData.objects ?? {})[0],
+              ) as GeoJSON.FeatureCollection);
 
-      if (!districtObject || !stateObject) {
-        throw new Error('Expected districts and states objects in TopoJSON.');
+        const statesTopology = (statesModule.default ?? statesModule) as any;
+        const stateObject = statesTopology.objects?.states ?? statesTopology.objects?.state;
+
+        if (!districtsFeatureCollection?.features?.length || !stateObject) {
+          throw new Error('district geometry unavailable');
+        }
+
+        const stateMesh = topojson.mesh(statesTopology, stateObject, (a, b) => a !== b) as GeoJSON.MultiLineString;
+        const projection = geoAlbersUsa().fitSize([width, height], districtsFeatureCollection);
+        const path = geoPath(projection);
+        activePath = path;
+        activeFeatures = new Map(
+          districtsFeatureCollection.features.map((feature) => [String(feature.id ?? feature.properties?.GEOID ?? ''), feature as GeoJSON.Feature]),
+        );
+
+        clearSvg();
+        svgElement.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+        const mapRoot = createSvgNode('g');
+        mapRoot.setAttribute('class', 'map-root');
+        svgElement.appendChild(mapRoot);
+
+        const districtsLayer = createSvgNode('g');
+        districtsLayer.setAttribute('class', 'districts-layer');
+        mapRoot.appendChild(districtsLayer);
+
+        for (const feature of districtsFeatureCollection.features) {
+          const districtPath = createSvgNode('path');
+          const geoid = String(feature.id ?? feature.properties?.GEOID ?? '');
+          const party = MEMBERS[geoid]?.party ?? 'I';
+
+          districtPath.setAttribute('class', `district party-${party}`);
+          districtPath.dataset.id = geoid;
+          districtPath.setAttribute('d', path(feature) ?? '');
+          districtsLayer.appendChild(districtPath);
+        }
+
+        const stateBordersPath = createSvgNode('path');
+        stateBordersPath.setAttribute('class', 'state-borders');
+        stateBordersPath.setAttribute('d', path(stateMesh) ?? '');
+        mapRoot.appendChild(stateBordersPath);
+
+        svgSelection = select(svgElement);
+        const mapRootSelection = select(mapRoot);
+        const stateBordersSelection = select(stateBordersPath);
+        const districtSelection = mapRootSelection.selectAll<SVGPathElement, unknown>('.district');
+
+        activeZoomBehavior = zoom<SVGSVGElement, unknown>()
+          .scaleExtent([1, 8])
+          .translateExtent([
+            [0, 0],
+            [width, height],
+          ])
+          .on('zoom', (event) => {
+            mapRootSelection.attr('transform', event.transform.toString());
+            stateBordersSelection.attr('stroke-width', String(0.6 / event.transform.k));
+            districtSelection.attr('stroke-width', String(event.transform.k > 1.5 ? 0.4 / event.transform.k : 0.4));
+          });
+
+        svgSelection.call(activeZoomBehavior);
+        svgSelection.on('dblclick.zoom', null);
+      } catch (nextError) {
+        if (version !== renderVersionRef.current) return;
+        clearSvg();
+        setError(nextError instanceof Error ? nextError.message : 'map failed to load');
       }
-
-      const districtsFeatureCollection = topojson.feature(topology as any, districtObject as any) as GeoJSON.FeatureCollection;
-      const stateMesh = topojson.mesh(topology as any, stateObject as any, (a, b) => a !== b) as GeoJSON.MultiLineString;
-
-      const projection = geoAlbersUsa().fitSize([width, height], districtsFeatureCollection);
-      const path = geoPath(projection);
-      activePath = path;
-      activeFeatures = new Map(
-        districtsFeatureCollection.features.map((feature) => [String(feature.id ?? ''), feature as GeoJSON.Feature]),
-      );
-
-      clearSvg();
-      svgElement.setAttribute('viewBox', `0 0 ${width} ${height}`);
-
-      const mapRoot = createSvgNode('g');
-      mapRoot.setAttribute('class', 'map-root');
-      svgElement.appendChild(mapRoot);
-
-      const districtsLayer = createSvgNode('g');
-      districtsLayer.setAttribute('class', 'districts-layer');
-      mapRoot.appendChild(districtsLayer);
-
-      for (const feature of districtsFeatureCollection.features) {
-        const districtPath = createSvgNode('path');
-        const geoid = String(feature.id ?? '');
-        const party = MEMBERS[geoid]?.party ?? 'I';
-
-        districtPath.setAttribute('class', `district party-${party}`);
-        districtPath.dataset.id = geoid;
-        districtPath.setAttribute('d', path(feature) ?? '');
-        districtsLayer.appendChild(districtPath);
-      }
-
-      const stateBordersPath = createSvgNode('path');
-      stateBordersPath.setAttribute('class', 'state-borders');
-      stateBordersPath.setAttribute('d', path(stateMesh) ?? '');
-      mapRoot.appendChild(stateBordersPath);
-
-      svgSelection = select(svgElement);
-      const mapRootSelection = select(mapRoot);
-      const stateBordersSelection = select(stateBordersPath);
-      const districtSelection = mapRootSelection.selectAll<SVGPathElement, unknown>('.district');
-
-      activeZoomBehavior = zoom<SVGSVGElement, unknown>()
-        .scaleExtent([1, 8])
-        .translateExtent([
-          [0, 0],
-          [width, height],
-        ])
-        .on('zoom', (event) => {
-          mapRootSelection.attr('transform', event.transform.toString());
-          stateBordersSelection.attr('stroke-width', String(0.6 / event.transform.k));
-          districtSelection.attr('stroke-width', String(event.transform.k > 1.5 ? 0.4 / event.transform.k : 0.4));
-        });
-
-      svgSelection.call(activeZoomBehavior);
-      svgSelection.on('dblclick.zoom', null);
     };
 
     const hideHover = () => {
@@ -306,6 +317,19 @@ export default function USMap() {
           }
         `}</style>
       </svg>
+      {error ? (
+        <p
+          style={{
+            marginTop: '18px',
+            textAlign: 'center',
+            fontFamily: 'DM Mono, monospace',
+            fontSize: '11px',
+            color: '#c0392b',
+          }}
+        >
+          map failed to load  {error}
+        </p>
+      ) : null}
       <p
         style={{
           marginTop: '20px',
