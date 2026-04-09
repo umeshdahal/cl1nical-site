@@ -1,6 +1,4 @@
-import { CURRENT_STATEWIDE_DATA, FIPS_TO_ABBR, STATES, STATES_BY_ABBR, type PartyCode, type StateMeta } from './us-state-meta';
-
-export type OverlayKey = 'house' | 'senate' | 'governor' | 'president';
+export type PartyCode = 'D' | 'R' | 'I' | 'Vacant';
 
 export type HouseDistrict = {
   id: string;
@@ -9,235 +7,126 @@ export type HouseDistrict = {
   districtCode: string;
   districtLabel: string;
   memberName: string;
-  party: PartyCode | 'Vacant';
+  party: PartyCode;
   vacant: boolean;
   geometry: GeoJSON.Feature['geometry'];
 };
 
-export type HouseSummary = {
-  dem: number;
-  rep: number;
-  ind: number;
-  vacant: number;
-  total: number;
+const PRIMARY_DISTRICTS_ENDPOINT =
+  'https://services.arcgis.com/P3ePLMYs2RVChkJx/arcgis/rest/services/USA_116th_Congressional_Districts/FeatureServer/0/query?where=1%3D1&outFields=*&f=geojson';
+
+const FALLBACK_DISTRICTS_ENDPOINT =
+  'https://services6.arcgis.com/ptshVLGaRNLSS3T1/arcgis/rest/services/Congressional_Districts/FeatureServer/2/query?where=1%3D1&outFields=STATEFP%2CSTNAME%2CPARTY%2CVACANT%2CCD119FP%2CGEOID%2CDisplayName&returnGeometry=true&f=geojson';
+
+const STATE_ABBR_BY_FIPS: Record<string, string> = {
+  '01': 'AL', '02': 'AK', '04': 'AZ', '05': 'AR', '06': 'CA', '08': 'CO', '09': 'CT', '10': 'DE', '11': 'DC',
+  '12': 'FL', '13': 'GA', '15': 'HI', '16': 'ID', '17': 'IL', '18': 'IN', '19': 'IA', '20': 'KS', '21': 'KY',
+  '22': 'LA', '23': 'ME', '24': 'MD', '25': 'MA', '26': 'MI', '27': 'MN', '28': 'MS', '29': 'MO', '30': 'MT',
+  '31': 'NE', '32': 'NV', '33': 'NH', '34': 'NJ', '35': 'NM', '36': 'NY', '37': 'NC', '38': 'ND', '39': 'OH',
+  '40': 'OK', '41': 'OR', '42': 'PA', '44': 'RI', '45': 'SC', '46': 'SD', '47': 'TN', '48': 'TX', '49': 'UT',
+  '50': 'VT', '51': 'VA', '53': 'WA', '54': 'WV', '55': 'WI', '56': 'WY',
 };
 
-export type StateBoard = StateMeta & {
-  governor: { name: string; party: PartyCode };
-  senators: Array<{ name: string; party: PartyCode }>;
-  presidentialWinner2024: PartyCode;
-  house: HouseSummary;
-};
-
-const HOUSE_ENDPOINT = 'https://services6.arcgis.com/ptshVLGaRNLSS3T1/arcgis/rest/services/Congressional_Districts/FeatureServer/2/query';
-
-const PARTY_TONES: Record<PartyCode | 'Vacant' | 'Split', { label: string; fill: string; tint: string; text: string }> = {
-  D: { label: 'Democratic', fill: '#2563eb', tint: '#dbeafe', text: '#1d4ed8' },
-  R: { label: 'Republican', fill: '#dc2626', tint: '#fee2e2', text: '#b91c1c' },
-  I: { label: 'Independent', fill: '#0f766e', tint: '#ccfbf1', text: '#0f766e' },
-  Vacant: { label: 'Vacant', fill: '#94a3b8', tint: '#e2e8f0', text: '#475569' },
-  Split: { label: 'Split', fill: '#9a7b19', tint: '#fef3c7', text: '#92400e' },
-};
-
-function getJsonUrl(params: Record<string, string>) {
-  return `${HOUSE_ENDPOINT}?${new URLSearchParams(params).toString()}`;
-}
-
-function normalizePartyCode(value: string | null | undefined): PartyCode | 'Vacant' {
+function normalizeParty(value: string | null | undefined): PartyCode {
   if (value === 'D' || value === 'R' || value === 'I') return value;
   return 'Vacant';
 }
 
-function buildEmptyHouseSummary(): HouseSummary {
-  return { dem: 0, rep: 0, ind: 0, vacant: 0, total: 0 };
-}
-
 function formatDistrictLabel(stateAbbr: string, districtCode: string) {
-  if (districtCode === '00') return `${stateAbbr} At-large`;
-  return `${stateAbbr}-${districtCode}`;
+  if (districtCode === '00') return `${stateAbbr}-AL`;
+  return `${stateAbbr}-${districtCode.padStart(2, '0')}`;
 }
 
-export function getPartyTone(party: PartyCode | 'Vacant' | 'Split') {
-  return PARTY_TONES[party];
-}
-
-export function getHouseMajority(summary: HouseSummary): PartyCode | 'I' | 'Vacant' | 'Split' {
-  const ranked = [
-    { key: 'D' as const, value: summary.dem },
-    { key: 'R' as const, value: summary.rep },
-    { key: 'I' as const, value: summary.ind },
-    { key: 'Vacant' as const, value: summary.vacant },
-  ].sort((left, right) => right.value - left.value);
-
-  if (ranked[0].value === ranked[1].value) return 'Split';
-  return ranked[0].key;
-}
-
-export function getSenateControl(stateAbbr: string): PartyCode | 'Split' {
-  const senators = CURRENT_STATEWIDE_DATA[stateAbbr]?.senators ?? [];
-  if (senators.length !== 2) return 'Split';
-  return senators[0].party === senators[1].party ? senators[0].party : 'Split';
-}
-
-export function getOverlayParty(board: StateBoard, overlay: OverlayKey): PartyCode | 'Vacant' | 'Split' {
-  if (overlay === 'house') return getHouseMajority(board.house);
-  if (overlay === 'senate') return getSenateControl(board.abbr);
-  if (overlay === 'governor') return board.governor.party;
-  return board.presidentialWinner2024;
-}
-
-export function getOverlayDetail(board: StateBoard, overlay: OverlayKey) {
-  if (overlay === 'house') {
-    return `${board.house.dem} D | ${board.house.rep} R | ${board.house.ind} I | ${board.house.vacant} vacant`;
+function firstDefined(properties: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = properties[key];
+    if (typeof value === 'string' && value.trim()) return value.trim();
+    if (typeof value === 'number') return String(value);
   }
-  if (overlay === 'senate') {
-    return board.senators.map((senator) => `${senator.name} (${senator.party})`).join(' | ');
-  }
-  if (overlay === 'governor') {
-    return `${board.governor.name} (${board.governor.party})`;
-  }
-  return `${board.presidentialWinner2024 === 'D' ? 'Democratic' : 'Republican'} statewide winner in 2024`;
+  return '';
 }
 
-export function buildInitialStateBoards() {
-  return Object.fromEntries(
-    STATES.map((state) => {
-      const statewide = CURRENT_STATEWIDE_DATA[state.abbr];
-      return [
-        state.abbr,
-        {
-          ...state,
-          governor: statewide.governor,
-          senators: statewide.senators,
-          presidentialWinner2024: statewide.presidentialWinner2024,
-          house: buildEmptyHouseSummary(),
-        } satisfies StateBoard,
-      ];
-    }),
-  ) as Record<string, StateBoard>;
+function normalizeDistrictFromPrimary(feature: GeoJSON.Feature): HouseDistrict | null {
+  const properties = (feature.properties ?? {}) as Record<string, unknown>;
+  const stateAbbr = firstDefined(properties, ['STATE_ABBR', 'STATEABBR', 'ST_ABBREV', 'STUSPS']);
+  const districtCode = firstDefined(properties, ['CDFIPS', 'DISTRICTID', 'DISTRICT', 'CD', 'CD116FP', 'CD119FP']).replace(/^0+(\d)$/, '0$1');
+  if (!stateAbbr || !districtCode) return null;
+
+  const memberName = firstDefined(properties, ['REP_NAME', 'NAME', 'MEMBER_NAME', 'DisplayName', 'REPRESENTATIVE']) || 'Unknown member';
+  const rawParty = firstDefined(properties, ['PARTY', 'PARTY_ABBR', 'PARTYAFFIL']);
+  const vacant = memberName.toLowerCase() === 'vacant' || rawParty.toUpperCase() === 'VACANT';
+  const party = vacant ? 'Vacant' : normalizeParty(rawParty);
+
+  return {
+    id: firstDefined(properties, ['OBJECTID', 'GEOID', 'FID', 'DISTRICTID']) || `${stateAbbr}-${districtCode}`,
+    stateAbbr,
+    stateName: firstDefined(properties, ['STATE_NAME', 'STATE', 'STNAME']) || stateAbbr,
+    districtCode,
+    districtLabel: formatDistrictLabel(stateAbbr, districtCode),
+    memberName: vacant ? 'Vacant' : memberName,
+    party,
+    vacant,
+    geometry: feature.geometry,
+  };
 }
 
-export async function fetchHouseSummaries() {
-  const response = await fetch(
-    getJsonUrl({
-      where: '1=1',
-      outFields: 'STATEFP,PARTY,VACANT,CD119FP',
-      returnGeometry: 'false',
-      f: 'json',
-    }),
-  );
+function normalizeDistrictFromFallback(feature: GeoJSON.Feature): HouseDistrict | null {
+  const properties = (feature.properties ?? {}) as Record<string, unknown>;
+  const stateFips = firstDefined(properties, ['STATEFP']).padStart(2, '0');
+  const stateAbbr = STATE_ABBR_BY_FIPS[stateFips];
+  const districtCode = firstDefined(properties, ['CD119FP']);
+  if (!stateAbbr || !districtCode || districtCode === 'ZZ') return null;
 
+  const vacant = firstDefined(properties, ['VACANT']) === 'Y';
+  return {
+    id: firstDefined(properties, ['GEOID', 'OBJECTID']) || `${stateAbbr}-${districtCode}`,
+    stateAbbr,
+    stateName: firstDefined(properties, ['STNAME']) || stateAbbr,
+    districtCode,
+    districtLabel: formatDistrictLabel(stateAbbr, districtCode),
+    memberName: vacant ? 'Vacant' : firstDefined(properties, ['DisplayName']) || 'Unknown member',
+    party: vacant ? 'Vacant' : normalizeParty(firstDefined(properties, ['PARTY'])),
+    vacant,
+    geometry: feature.geometry,
+  };
+}
+
+async function fetchGeoJson(url: string) {
+  const response = await fetch(url);
   if (!response.ok) {
-    throw new Error(`House summary request failed with ${response.status}`);
+    throw new Error(`Request failed with ${response.status}`);
   }
+  return response.json();
+}
 
-  const payload = await response.json();
-  const summaries = Object.fromEntries(STATES.map((state) => [state.abbr, buildEmptyHouseSummary()])) as Record<string, HouseSummary>;
+export async function fetchNationalDistricts() {
+  try {
+    const payload = await fetchGeoJson(PRIMARY_DISTRICTS_ENDPOINT);
+    const districts = ((payload.features ?? []) as GeoJSON.Feature[])
+      .map(normalizeDistrictFromPrimary)
+      .filter(Boolean) as HouseDistrict[];
 
-  for (const feature of payload.features ?? []) {
-    const attributes = feature.attributes ?? {};
-    if (attributes.CD119FP === 'ZZ') continue;
-
-    const stateAbbr = FIPS_TO_ABBR[String(attributes.STATEFP).padStart(2, '0')];
-    if (!stateAbbr) continue;
-
-    const summary = summaries[stateAbbr];
-    summary.total += 1;
-
-    if (attributes.VACANT === 'Y') {
-      summary.vacant += 1;
-      continue;
+    if (districts.length > 300) {
+      return {
+        districts,
+        sourceLabel: 'live geojson | arcgis congressional districts',
+      };
     }
 
-    const party = normalizePartyCode(attributes.PARTY);
-    if (party === 'D') summary.dem += 1;
-    else if (party === 'R') summary.rep += 1;
-    else if (party === 'I') summary.ind += 1;
-    else summary.vacant += 1;
+    throw new Error('Primary feed returned too few districts.');
+  } catch (primaryError) {
+    const payload = await fetchGeoJson(FALLBACK_DISTRICTS_ENDPOINT);
+    const districts = ((payload.features ?? []) as GeoJSON.Feature[])
+      .map(normalizeDistrictFromFallback)
+      .filter(Boolean) as HouseDistrict[];
+
+    if (!districts.length) {
+      throw new Error(primaryError instanceof Error ? primaryError.message : 'District map failed to load.');
+    }
+
+    return {
+      districts,
+      sourceLabel: 'live house clerk fallback | usdot / census / house clerk',
+    };
   }
-
-  return summaries;
-}
-
-export async function fetchDistrictsForState(stateAbbr: string) {
-  const state = STATES_BY_ABBR[stateAbbr];
-  if (!state) return [];
-
-  const response = await fetch(
-    getJsonUrl({
-      where: `STATEFP='${state.fips}'`,
-      outFields: 'STATEFP,STNAME,PARTY,VACANT,CD119FP,GEOID,DisplayName,GeoDisplay',
-      returnGeometry: 'true',
-      f: 'geojson',
-    }),
-  );
-
-  if (!response.ok) {
-    throw new Error(`District request failed with ${response.status}`);
-  }
-
-  const payload = await response.json();
-  const features = (payload.features ?? []) as GeoJSON.Feature[];
-
-  return features
-    .map((feature) => {
-      const properties = (feature.properties ?? {}) as Record<string, string>;
-      const districtCode = properties.CD119FP;
-      if (!districtCode || districtCode === 'ZZ') return null;
-
-      const vacant = properties.VACANT === 'Y';
-      return {
-        id: properties.GEOID,
-        stateAbbr,
-        stateName: state.name,
-        districtCode,
-        districtLabel: formatDistrictLabel(stateAbbr, districtCode),
-        memberName: vacant ? 'Vacant' : properties.DisplayName ?? 'Unknown member',
-        party: vacant ? 'Vacant' : normalizePartyCode(properties.PARTY),
-        vacant,
-        geometry: feature.geometry,
-      } satisfies HouseDistrict;
-    })
-    .filter(Boolean)
-    .sort((left, right) => Number(left!.districtCode) - Number(right!.districtCode)) as HouseDistrict[];
-}
-
-export async function fetchAllDistricts() {
-  const response = await fetch(
-    getJsonUrl({
-      where: '1=1',
-      outFields: 'STATEFP,PARTY,VACANT,CD119FP,GEOID,DisplayName',
-      returnGeometry: 'true',
-      f: 'geojson',
-    }),
-  );
-
-  if (!response.ok) {
-    throw new Error(`National district request failed with ${response.status}`);
-  }
-
-  const payload = await response.json();
-  const features = (payload.features ?? []) as GeoJSON.Feature[];
-
-  return features
-    .map((feature) => {
-      const properties = (feature.properties ?? {}) as Record<string, string>;
-      const stateAbbr = FIPS_TO_ABBR[String(properties.STATEFP).padStart(2, '0')];
-      const districtCode = properties.CD119FP;
-      if (!stateAbbr || !districtCode || districtCode === 'ZZ') return null;
-
-      const vacant = properties.VACANT === 'Y';
-      return {
-        id: properties.GEOID,
-        stateAbbr,
-        stateName: STATES_BY_ABBR[stateAbbr].name,
-        districtCode,
-        districtLabel: formatDistrictLabel(stateAbbr, districtCode),
-        memberName: vacant ? 'Vacant' : properties.DisplayName ?? 'Unknown member',
-        party: vacant ? 'Vacant' : normalizePartyCode(properties.PARTY),
-        vacant,
-        geometry: feature.geometry,
-      } satisfies HouseDistrict;
-    })
-    .filter(Boolean) as HouseDistrict[];
 }
