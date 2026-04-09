@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import CustomCursor from '../components/effects/CustomCursor';
 
 interface Props {
   title: string;
@@ -32,6 +33,7 @@ const {
   </head>
   <body class:list={['antialiased', theme === 'dark' ? 'theme-dark' : 'theme-light', bodyClass]} style={bodyStyle}>
     {showNoise && <div class="noise-overlay"></div>}
+    <CustomCursor client:only="react" />
     <slot />
   </body>
 </html>

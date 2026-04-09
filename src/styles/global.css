@@ -43,13 +43,18 @@ body {
   background: var(--page-bg, var(--bg-dark));
   color: var(--page-fg, var(--text-cream));
   overflow-x: hidden;
-  cursor: none;
+  cursor: auto;
 }
 
 @media (hover: none) and (pointer: coarse) {
   body {
     cursor: auto;
   }
+}
+
+body.has-custom-cursor,
+body.has-custom-cursor * {
+  cursor: none !important;
 }
 
 .noise-overlay {
@@ -65,13 +70,20 @@ body {
 
 .cursor-crosshair {
   position: fixed;
-  width: 16px;
-  height: 16px;
+  left: 0;
+  top: 0;
+  width: 18px;
+  height: 18px;
   pointer-events: none;
   z-index: 10000;
   will-change: transform;
-  transform: translate(-50%, -50%);
+  --cursor-x: 0px;
+  --cursor-y: 0px;
+  --cursor-scale: 1;
+  transform: translate3d(var(--cursor-x), var(--cursor-y), 0) translate(-50%, -50%) scale(var(--cursor-scale));
   mix-blend-mode: difference;
+  opacity: 0.95;
+  transition: transform 160ms ease, opacity 160ms ease;
 }
 
 .cursor-crosshair::before,
@@ -96,7 +108,7 @@ body {
 }
 
 .cursor-crosshair.is-hovering {
-  transform: translate(-50%, -50%) rotate(45deg);
+  --cursor-scale: 1.45;
 }
 
 @media (hover: none) and (pointer: coarse) {

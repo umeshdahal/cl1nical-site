@@ -14,6 +14,16 @@ export default function CustomCursor() {
   }, []);
 
   useEffect(() => {
+    if (isTouchDevice) {
+      document.body.classList.remove('has-custom-cursor');
+      return;
+    }
+
+    document.body.classList.add('has-custom-cursor');
+    return () => document.body.classList.remove('has-custom-cursor');
+  }, [isTouchDevice]);
+
+  useEffect(() => {
     if (isTouchDevice) return;
     
     let rafId: number;
@@ -23,7 +33,8 @@ export default function CustomCursor() {
       cursorY.current += (y - cursorY.current) * 0.15;
       
       if (cursorRef.current) {
-        cursorRef.current.style.transform = `translate(${cursorX.current}px, ${cursorY.current}px)`;
+        cursorRef.current.style.setProperty('--cursor-x', `${cursorX.current}px`);
+        cursorRef.current.style.setProperty('--cursor-y', `${cursorY.current}px`);
       }
       
       rafId = requestAnimationFrame(animate);
