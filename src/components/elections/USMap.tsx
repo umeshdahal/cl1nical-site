@@ -5,6 +5,7 @@ import { pointer, select } from 'd3-selection';
 import 'd3-transition';
 import { zoom, zoomIdentity, zoomTransform } from 'd3-zoom';
 import * as topojson from 'topojson-client';
+import statesTopology from 'us-atlas/states-10m.json';
 import { getTopoJSON } from '../../lib/topojson-cache';
 import { MEMBERS } from '../../lib/member-data';
 
@@ -66,7 +67,7 @@ export default function USMap() {
       setError(null);
 
       try {
-        const [districtsData, statesModule] = await Promise.all([getTopoJSON(), import('us-atlas/states-10m.json')]);
+        const districtsData = await getTopoJSON();
         if (version !== renderVersionRef.current) return;
 
         const districtsFeatureCollection =
@@ -77,14 +78,13 @@ export default function USMap() {
                 districtsData.objects?.districts ?? districtsData.objects?.congress ?? Object.values(districtsData.objects ?? {})[0],
               ) as GeoJSON.FeatureCollection);
 
-        const statesTopology = (statesModule.default ?? statesModule) as any;
-        const stateObject = statesTopology.objects?.states ?? statesTopology.objects?.state;
+        const stateObject = (statesTopology as any).objects?.states ?? (statesTopology as any).objects?.state;
 
         if (!districtsFeatureCollection?.features?.length || !stateObject) {
           throw new Error('district geometry unavailable');
         }
 
-        const stateMesh = topojson.mesh(statesTopology, stateObject, (a, b) => a !== b) as GeoJSON.MultiLineString;
+        const stateMesh = topojson.mesh(statesTopology as any, stateObject, (a, b) => a !== b) as GeoJSON.MultiLineString;
         const projection = geoAlbersUsa().fitSize([width, height], districtsFeatureCollection);
         const path = geoPath(projection);
         activePath = path;
