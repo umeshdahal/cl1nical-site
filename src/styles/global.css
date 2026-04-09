@@ -1,5 +1,4 @@
-@import url('https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@200;300;400;500&family=DM+Mono:wght@300;400;500&display=swap');
 
 @import "tailwindcss";
 
@@ -10,7 +9,8 @@
   --accent-blue: #2d5be3;
   --text-cream: #f5f0e8;
   --text-dark: #0a0a0a;
-  --font-heading: 'Clash Display', sans-serif;
+  --font-heading: 'DM Sans', sans-serif;
+  --font-sans: 'DM Sans', sans-serif;
   --font-mono: 'DM Mono', monospace;
   color-scheme: dark;
 }
@@ -39,7 +39,7 @@ body.theme-light {
 
 body {
   min-height: 100%;
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   background: var(--page-bg, var(--bg-dark));
   color: var(--page-fg, var(--text-cream));
   overflow-x: hidden;

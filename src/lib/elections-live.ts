@@ -201,3 +201,43 @@ export async function fetchDistrictsForState(stateAbbr: string) {
     .filter(Boolean)
     .sort((left, right) => Number(left!.districtCode) - Number(right!.districtCode)) as HouseDistrict[];
 }
+
+export async function fetchAllDistricts() {
+  const response = await fetch(
+    getJsonUrl({
+      where: '1=1',
+      outFields: 'STATEFP,PARTY,VACANT,CD119FP,GEOID,DisplayName',
+      returnGeometry: 'true',
+      f: 'geojson',
+    }),
+  );
+
+  if (!response.ok) {
+    throw new Error(`National district request failed with ${response.status}`);
+  }
+
+  const payload = await response.json();
+  const features = (payload.features ?? []) as GeoJSON.Feature[];
+
+  return features
+    .map((feature) => {
+      const properties = (feature.properties ?? {}) as Record<string, string>;
+      const stateAbbr = FIPS_TO_ABBR[String(properties.STATEFP).padStart(2, '0')];
+      const districtCode = properties.CD119FP;
+      if (!stateAbbr || !districtCode || districtCode === 'ZZ') return null;
+
+      const vacant = properties.VACANT === 'Y';
+      return {
+        id: properties.GEOID,
+        stateAbbr,
+        stateName: STATES_BY_ABBR[stateAbbr].name,
+        districtCode,
+        districtLabel: formatDistrictLabel(stateAbbr, districtCode),
+        memberName: vacant ? 'Vacant' : properties.DisplayName ?? 'Unknown member',
+        party: vacant ? 'Vacant' : normalizePartyCode(properties.PARTY),
+        vacant,
+        geometry: feature.geometry,
+      } satisfies HouseDistrict;
+    })
+    .filter(Boolean) as HouseDistrict[];
+}

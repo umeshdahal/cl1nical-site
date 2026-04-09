@@ -7,7 +7,8 @@ import AppLayout from '../layouts/AppLayout.astro';
   title="2026 Election Tracker | cl1nical"
   description="Interactive election map with state-level race data."
   theme="light"
-  bodyStyle="--page-bg: #f5efe4; --page-fg: #171717;"
+  showCustomCursor={false}
+  bodyStyle="--page-bg: #c4cfe8; --page-fg: rgba(255,255,255,0.92);"
 >
   <ElectionsPage client:load />
 </AppLayout>
